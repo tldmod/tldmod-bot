@@ -4,7 +4,7 @@ import datetime, time
 new_update = False
 base_date = datetime.datetime.fromtimestamp(1535662299) # datetime.datetime.now()
 
-def new_workshop_update(base_date):
+def check_workshop_update(base_date):
   res = requests.get('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223')
   soup = bs4.BeautifulSoup(res.text, features='html5lib')
   for anchor in soup.select('div#mainContents p[id]'):
@@ -16,7 +16,7 @@ def new_workshop_update(base_date):
       print("[!] '%s' is not an integer, maybe Valve changed something." % id_str)
       continue
       
-    print (id_str, time.ctime(id), id_date > base_date)
+#    print (id_str, time.ctime(id), id_date > base_date)
     
     # swy: if the reported date is newer than the launch 
     if (id_date > base_date):

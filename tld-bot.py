@@ -6,7 +6,7 @@ import discord
 from pprint import pprint
 
 import datetime, time
-from beautiful_soup import new_workshop_update
+from beautiful_soup import check_workshop_update
 
 # swy: ugly discord.log file boilerplate
 import logging
@@ -58,18 +58,6 @@ class TldDiscordClient(discord.Client):
       msg = 'Hello {0.author.mention}'.format(message)
       await message.channel.send(msg)
 
-    # swy: same thing
-    if message.content.startswith('!embed'):
-      embed = discord.Embed(colour=discord.Colour(0x1b2148), url="https://discordapp.com", description="Good news, we have deployed a new Workshop update.\nTake a look at our updated TLD [changelog here](https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock).")
-      
-      embed.set_thumbnail(url="https://avatars1.githubusercontent.com/u/12862724?s=400&u=223b3e00f52394fc6b5690999970a755f5444aab&v=4")
-      embed.set_author(name="New Steam Workshop update — 2019-20-23 @Swyter", url="https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/200px-Steam_icon_logo.svg.png")
-      
-      embed.add_field(name="➥ Restart your Steam client to force an update", value="Updates should be automatic, but they may take a few minutes.", inline=True)
-      embed.add_field(name="➥ How do I get this? I'm using the manual install", value="You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).")
-
-      await message.channel.send(embed=embed)
-
   async def on_member_join(self, member):
     print('User joined: ', pprint(member))
 
@@ -88,22 +76,29 @@ class TldDiscordClient(discord.Client):
   async def workshop_background_task(self):
       await self.wait_until_ready()
       print('[i] background workshop scrapper ready')
-      counter = 0
       channel = self.get_channel(470890531061366787)
+#      base_date = datetime.datetime.now()
       base_date = datetime.datetime.fromtimestamp(1535662299) # datetime.datetime.now()
       
       while not self.is_closed():
-          counter += 1
+          new_update = check_workshop_update(base_date)
           
-          new_update = new_workshop_update(base_date)
-          
-          if (new_update != base_date):
+          if (new_update):
             base_date = new_update
-            await channel.send("New update %s!" % new_update)
+
+            embed = discord.Embed(colour=discord.Colour(0x1b2148), url="https://discordapp.com", description="Good news, we have deployed a new Workshop update.\nTake a look at our updated TLD [changelog here](https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock).")
+            
+            embed.set_thumbnail(url="https://avatars1.githubusercontent.com/u/12862724?s=400&u=223b3e00f52394fc6b5690999970a755f5444aab&v=4")
+            embed.set_author(name="New Steam Workshop update — 2019-20-23 @Swyter", url="https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/200px-Steam_icon_logo.svg.png")
+            
+            embed.add_field(name="➥ Restart your Steam client to force an update", value="Updates should be automatic, but they may take a few minutes.", inline=True)
+            embed.add_field(name="➥ How do I get this? I'm using the manual install", value="You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).")
+
+            await channel.send("New update %s!" % new_update, embed=embed)
+
           
-          print("Sent recurrent message %u" % counter, new_update)
-          await channel.send(counter)
-          await asyncio.sleep(60) # task runs every 60 seconds
+          # task runs every 60 seconds
+          await asyncio.sleep(10)
 
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient()
