@@ -5,6 +5,10 @@ import asyncio
 import discord
 from pprint import pprint
 
+import datetime, time
+from beautiful_soup import new_workshop_update
+
+# swy: ugly discord.log file boilerplate
 import logging
 
 logger = logging.getLogger('discord')
@@ -13,25 +17,24 @@ handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w'
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+# swy: exit if we don't have a valid bot token
 if not 'DISCORD_TOKEN' in os.environ:
   print('[!] Set your DISCORD_TOKEN environment variable to your Discord client secret.')
   sys.exit(-1)
 
+# swy: implement our bot thingie
 class TldDiscordClient(discord.Client):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
 
     # create the background task and run it in the background
-    self.bg_task = self.loop.create_task(self.my_background_task())
+    self.bg_task = self.loop.create_task(self.workshop_background_task())
 
   async def on_ready(self):
     print('Logged in as')
     print(self.user.name)
     print(self.user.id)
     print('------')
-    
-    channel = self.get_channel(470890531061366787)
-    await channel.send("LOL")
 
   async def on_message(self, message):
     # swy: no weird commands here, boy!
@@ -68,8 +71,7 @@ class TldDiscordClient(discord.Client):
       await message.channel.send(embed=embed)
 
   async def on_member_join(self, member):
-    print(pprint(member))
-    print('User joined: ', member)
+    print('User joined: ', pprint(member))
 
     if member.name in ['cpt', 'cp', 'sgt', 'tp'] and \
        member.name == member.display_name and \
@@ -77,27 +79,33 @@ class TldDiscordClient(discord.Client):
        len(member.roles) <= 1:
       self.ban(member, reason='[Automatic] Suspected bot or automated account.')
       
-      # swy: send a channel to #off-topic
+      # swy: send a message to the #off-topic channel
       await self.get_channel("493040076511510550").send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
 
   async def on_message_delete(self, message):
     print('Deleted message:', pprint(message))
 
-  async def my_background_task(self):
-      print("my_background_task")
+  async def workshop_background_task(self):
       await self.wait_until_ready()
-      print("my_background_task2")
+      print('[i] background workshop scrapper ready')
       counter = 0
       channel = self.get_channel(470890531061366787)
-      print("my_background_task3", self.is_closed())
+      base_date = datetime.datetime.fromtimestamp(1535662299) # datetime.datetime.now()
       
       while not self.is_closed():
           counter += 1
-          print("Sent recurrent message %u" % counter)
+          
+          new_update = new_workshop_update(base_date)
+          
+          if (new_update != base_date):
+            base_date = new_update
+            await channel.send("New update %s!" % new_update)
+          
+          print("Sent recurrent message %u" % counter, new_update)
           await channel.send(counter)
           await asyncio.sleep(60) # task runs every 60 seconds
 
-
+# swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient()
 
 while True:
