@@ -66,15 +66,22 @@ class TldDiscordClient(discord.Client):
   async def on_member_join(self, member):
     print('User joined: ', pprint(member))
 
-    if member.name in ['cpt', 'cp', 'sgt', 'tp'] and \
+    if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
+       member.name.islower() and \
+       len(member.name) < 5 and \
        member.name == member.display_name and \
        member.avatar == None and \
        len(member.roles) <= 1:
-      self.ban(member, reason='[Automatic] Suspected bot or automated account.')
+       
+      channel_test = member.guild.system_channel
       
+      if (not channel_test):
+        channel_test = self.get_channel(470890531061366787)
+       
       # swy: send a message to the #off-topic channel
-      await self.get_channel("493040076511510550").send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
-
+      await channel_test.send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
+      await member.guild.ban(member, reason='[Automatic] Suspected bot or automated account.')
+      
   async def on_message_delete(self, message):
     print('Deleted message:', pprint(message))
 
