@@ -83,20 +83,21 @@ class TldDiscordClient(discord.Client):
       while not self.is_closed():
           new_update = check_workshop_update(base_date)
           
-          if (new_update):
-            base_date = new_update
-
-            embed = discord.Embed(colour=discord.Colour(0x1b2148), url="https://discordapp.com", description="Good news, we have deployed a new Workshop update.\nTake a look at our updated TLD [changelog here](https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock).")
-            
-            embed.set_thumbnail(url="https://avatars1.githubusercontent.com/u/12862724?s=400&u=223b3e00f52394fc6b5690999970a755f5444aab&v=4")
-            embed.set_author(name="New Steam Workshop update — 2019-20-23 @Swyter", url="https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock", icon_url="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/200px-Steam_icon_logo.svg.png")
-            
-            embed.add_field(name="➥ Restart your Steam client to force an update", value="Updates should be automatic, but they may take a few minutes.", inline=True)
-            embed.add_field(name="➥ How do I get this? I'm using the manual install", value="You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).")
-
-            await channel.send("New update %s!" % new_update, embed=embed)
-
+          pprint(new_update)
           
+          if (new_update):
+            base_date = new_update['date']
+
+            embed = discord.Embed(colour=discord.Colour(0x1b2148), description='Good news, we have deployed a new Workshop update.\nTake a look at our updated TLD [changelog here](https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#%s).' % new_update['str'])
+            
+            embed.set_thumbnail(url='https://avatars1.githubusercontent.com/u/12862724')
+            embed.set_author(name='New Steam Workshop update — %s' % new_update['date'].strftime("%Y-%m-%d %H:%M"), url='https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock', icon_url='https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/200px-Steam_icon_logo.svg.png')
+            
+            embed.add_field(name='➥ Restart your Steam client to force an update', value='Updates should be automatic, but they may take a few minutes.', inline=True)
+            embed.add_field(name="➥ How do I get this? I'm using the manual install", value='You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).')
+
+            await channel.send('New update %s!' % new_update['date'], embed=embed)
+
           # task runs every 60 seconds
           await asyncio.sleep(10)
 

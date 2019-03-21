@@ -22,4 +22,4 @@ def check_workshop_update(base_date):
     if (id_date > base_date):
       print("[!] found new %s workshop update." % time.ctime(id))
       base_date = id_date
-      return id_date
+      return {'date': id_date, 'str': id_str, 'int': id}
