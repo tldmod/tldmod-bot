@@ -56,7 +56,7 @@ class TldDiscordClient(discord.Client):
 #     print("Ignored:", pprint(message.author))
       return
 
-    print(pprint(message.author.roles))
+#   print(pprint(message.author.roles))
     
     # swy: useful for testing
     if message.content.startswith('!hello'):
@@ -64,7 +64,7 @@ class TldDiscordClient(discord.Client):
       await message.channel.send(msg)
 
   async def on_member_join(self, member):
-    print('User joined: ', pprint(member))
+    print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
 
     if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
        member.name.islower() and \
@@ -83,16 +83,17 @@ class TldDiscordClient(discord.Client):
       await member.guild.ban(member, reason='[Automatic] Suspected bot or automated account.')
       
   async def on_message_delete(self, message):
-    print('Deleted message:', pprint(message))
+    print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"))
 
   async def workshop_background_task(self):
     await self.wait_until_ready()
     print('[i] background workshop scrapper ready')
     
+    channel_buil = self.get_channel(492923251329204224) # TLD discord -- #nightly-builds
     channel_gene = self.get_channel(492783429872517121) # TLD discord -- #general
     channel_test = self.get_channel(470890531061366787) # Swyter test -- #general
     base_date = datetime.datetime.now()
-#   base_date = datetime.datetime.fromtimestamp(1535662299) # datetime.datetime.now()
+#   base_date = datetime.datetime.fromtimestamp(1549911943) # datetime.datetime.now()
     
     while not self.is_closed():
       new_update = check_workshop_update(base_date)
@@ -108,11 +109,12 @@ class TldDiscordClient(discord.Client):
         embed.add_field(name='➥ Restart your Steam client to force an update', value='Updates should be automatic, but they may take a few minutes.', inline=True)
         embed.add_field(name="➥ How do I get this? I'm using the manual install", value='You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).')
   
+        await channel_buil.send(embed=embed)
         await channel_gene.send(embed=embed)
         await channel_test.send(embed=embed)
   
-      # task runs 3 times per hour; infinitely
-      await asyncio.sleep((60 / 3) * 60)
+      # task runs every 30 seconds; infinitely
+      await asyncio.sleep(30)
   
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient()
