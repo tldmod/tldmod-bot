@@ -93,7 +93,7 @@ class TldDiscordClient(discord.Client):
     channel_gene = self.get_channel(492783429872517121) # TLD discord -- #general
     channel_test = self.get_channel(470890531061366787) # Swyter test -- #general
     base_date = datetime.datetime.now()
-#   base_date = datetime.datetime.fromtimestamp(1549911943) # datetime.datetime.now()
+#   base_date = datetime.datetime.fromtimestamp(1559425192) # datetime.datetime.now()
     
     while not self.is_closed():
       new_update = check_workshop_update(base_date)

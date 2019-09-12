@@ -5,7 +5,11 @@ new_update = False
 base_date = datetime.datetime.fromtimestamp(1535662299) # datetime.datetime.now()
 
 def check_workshop_update(base_date):
-  res = requests.get('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223')
+  try:
+    res = requests.get('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223')
+  except requests.exceptions.RequestException as e:
+    print(e)
+    return False 
   soup = bs4.BeautifulSoup(res.text, features='html5lib')
   for anchor in soup.select('div#mainContents p[id]'):
     try:
