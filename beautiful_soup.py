@@ -46,4 +46,4 @@ def check_workshop_update(base_date):
       return {'date': id_date, 'str': id_str, 'int': id}
 
 
-check_workshop_update(base_date)
+# check_workshop_update(base_date)
