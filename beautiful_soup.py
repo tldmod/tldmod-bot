@@ -7,7 +7,7 @@ base_date = datetime.datetime.utcfromtimestamp(1535662299) # datetime.datetime.n
 
 def check_workshop_update(base_date):
   try:
-    res = requests.get('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223')
+    res = requests.get('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223?l=english')
   except requests.exceptions.RequestException as e:
     print(e)
     return False 
