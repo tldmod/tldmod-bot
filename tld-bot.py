@@ -96,8 +96,11 @@ class TldDiscordClient(discord.Client):
 #   base_date = datetime.datetime.fromtimestamp(1580708354) # datetime.datetime.now()
 
     # swy: load it from a previous run, if any
-    with open('tld-bot-timestamp.txt', 'r') as f:
-      base_date = datetime.datetime.fromtimestamp(int(f.read()))
+    try:
+      with open('tld-bot-timestamp.txt', 'r') as f:
+        base_date = datetime.datetime.fromtimestamp(int(f.read()))
+    except:
+      pass
 
     while not self.is_closed():
       new_update = check_workshop_update(base_date)
