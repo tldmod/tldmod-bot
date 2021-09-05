@@ -93,8 +93,12 @@ class TldDiscordClient(discord.Client):
     channel_gene = self.get_channel(492783429872517121) # TLD discord -- #general
     channel_test = self.get_channel(470890531061366787) # Swyter test -- #general
     base_date = datetime.datetime.now()
-#   base_date = datetime.datetime.fromtimestamp(1580708354) # datetime.datetime.now()^
-    
+#   base_date = datetime.datetime.fromtimestamp(1580708354) # datetime.datetime.now()
+
+    # swy: load it from a previous run, if any
+    with open('tld-bot-timestamp.txt', 'r') as f:
+      base_date = datetime.datetime.fromtimestamp(int(f.read()))
+
     while not self.is_closed():
       new_update = check_workshop_update(base_date)
                 
@@ -108,14 +112,18 @@ class TldDiscordClient(discord.Client):
         
         embed.add_field(name='➥ Restart your Steam client to force an update', value='Updates should be automatic, but they may take a few minutes.', inline=True)
         embed.add_field(name="➥ How do I get this? I'm using the manual install", value='You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).')
-  
+
         await channel_buil.send(embed=embed)
         await channel_gene.send(embed=embed)
         await channel_test.send(embed=embed)
-  
+
+        # swy: save it persistently
+        with open('tld-bot-timestamp.txt', 'w') as f:
+          f.write('%u' % int(time.mktime(base_date.timetuple())))
+
       # task runs every 30 seconds; infinitely
       await asyncio.sleep(30)
-  
+
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient()
 
