@@ -2,7 +2,7 @@ import bs4, requests
 import datetime, time
 
 new_update = False
-base_date = datetime.datetime.fromtimestamp(1535662299) # datetime.datetime.now()
+base_date = datetime.datetime.utcfromtimestamp(1535662299) # datetime.datetime.now()
 
 def check_workshop_update(base_date):
   try:
@@ -15,7 +15,7 @@ def check_workshop_update(base_date):
     try:
       id_str  = anchor.get('id')
       id      = int(id_str)
-      id_date = datetime.datetime.fromtimestamp(id)
+      id_date = datetime.datetime.utcfromtimestamp(id)
     except ValueError:
       print("[!] '%s' is not an integer, maybe Valve changed something." % id_str)
       continue
