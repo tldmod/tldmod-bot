@@ -9,12 +9,15 @@ def retrieve_page_contents(url):
   try:
     res = requests.get(url)
   except requests.exceptions.RequestException as e:
-    print(e)
+    print("[e] page error: ", e)
     return False 
   soup = bs4.BeautifulSoup(res.text, features='html5lib')
   return soup
 
 def get_page_title(soup):
+  if not soup:
+    return ""
+
   # swy: careful about error'ing out
   for title_tag in soup.select('head > title'):
     return str(title_tag.string)
@@ -26,6 +29,10 @@ def check_workshop_update(base_date):
   #      ignore that, we're looking for our own mod's problems.
   tld_soup = retrieve_page_contents('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223?l=english')
   swc_soup = retrieve_page_contents('https://steamcommunity.com/sharedfiles/filedetails/changelog/742671195?l=english')
+
+  # swy: exit early if we couldn't retrieve the mod's changelog page
+  if not tld_soup:
+    return False
 
   tld_title_text = get_page_title(tld_soup)
   swc_title_text = get_page_title(swc_soup)
