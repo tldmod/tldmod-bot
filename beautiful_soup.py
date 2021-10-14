@@ -70,5 +70,5 @@ def check_workshop_update(base_date):
       base_date = id_date
       return {'date': id_date, 'str': id_str, 'int': id}
 
-
-# check_workshop_update(base_date)
+if __name__ == "__main__":
+  check_workshop_update(base_date)
