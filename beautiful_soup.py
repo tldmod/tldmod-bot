@@ -10,7 +10,15 @@ def retrieve_page_contents(url):
     res = requests.get(url)
   except requests.exceptions.RequestException as e:
     print("[e] page error: ", e)
-    return False 
+    return False
+  # swy: python exceptions are a big pain, handle them correctly instead of blocking the scrapper: https://stackoverflow.com/a/24700390/674685
+  except requests.exceptions.ConnectionError as e:
+    print("[e] connection error: ", e)
+    return False
+  except Exception as e:
+    print("[e] misc request error: ", e)
+    return False
+
   soup = bs4.BeautifulSoup(res.text, features='html5lib')
   return soup
 
@@ -31,7 +39,7 @@ def check_workshop_update(base_date):
   swc_soup = retrieve_page_contents('https://steamcommunity.com/sharedfiles/filedetails/changelog/742671195?l=english')
 
   # swy: exit early if we couldn't retrieve the mod's changelog page
-  if not tld_soup:
+  if not tld_soup or not swc_soup:
     return False
 
   tld_title_text = get_page_title(tld_soup)
