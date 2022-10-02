@@ -22,6 +22,35 @@ if not 'DISCORD_TOKEN' in os.environ:
   print('[!] Set your DISCORD_TOKEN environment variable to your Discord client secret.')
   sys.exit(-1)
 
+# swy: first thing; you'll need to generate your own $TWITTER_API_KEY and $TWITTER_API_SECRET from https://developer.twitter.com/apps, which now requires adding a phone number. >:(
+#
+#      to act in name of an user/account you need to get the "access tokens"; you can get the user-access-token and user-access-token-secret for random accounts by running
+#      `twurl authorize -j -t $TWITTER_API_KEY -s $TWITTER_API_SECRET` (install that with `gem install twurl`) and retrieving the token and secret fields
+#      from your ~/.twurlrc file. If you just want to post from the account that owns the app/bot, you can grab just those user-access-tokens
+#      directly from https://developer.twitter.com/apps and skip the `twurl` OAuth 1.0 stuff shown above.
+#
+#      By default Twitter only gives you "Essential" access, so you can't use the older 1.1 API that all the Internet talks about, (i.e. no `api = tweepy.API(auth); api.update_status(text)`)
+#      to send tweets you need to use the 2.0 API, which for tweepy means using the `tweepy.Client,` functions. Easy peasy. :(
+def twitter_send_tweet(text):
+    try:
+        import tweepy
+    except:
+        print('  [e] cannot send tweets, you may not have ran `pip install tweepy`; skipping.')
+        return
+
+    if not all(var in os.environ  for var in ('TWITTER_API_KEY', 'TWITTER_API_SECRET', 'TWITTER_ACCOUNT_ACCESS_TOKEN', 'TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET')):
+        print('  [e] cannot send tweets; you are missing the various keys and tokens needed to call the mess that is the badly documented Twitter API; skipping.')
+        return
+
+    try:
+        client = tweepy.Client(
+            consumer_key = os.environ['TWITTER_API_KEY'],                  consumer_secret = os.environ['TWITTER_API_SECRET'],
+            access_token = os.environ['TWITTER_ACCOUNT_ACCESS_TOKEN'], access_token_secret = os.environ['TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET']
+        )
+        client.create_tweet(text=text)
+    except Exception as e:
+        print('  [!] exception while sending tweet. Ignoring:', e)
+
 # swy: implement our bot thingie
 class TldDiscordClient(discord.Client):
   def __init__(self, *args, **kwargs):
@@ -132,6 +161,12 @@ class TldDiscordClient(discord.Client):
         # swy: save it persistently
         with open('tld-bot-timestamp.txt', 'w') as f:
           f.write('%u' % int(time.mktime(base_date.timetuple())))
+
+        # swy: notify the twitter people from @tldmod :)
+        twitter_send_tweet(
+          f'''New Steam Workshop update — {new_update['date'].strftime("%Y-%m-%d %H:%M")}.\n\n''' +
+          f'''Good news, we have deployed a new Workshop update. Take a look at our updated TLD changelog here: https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#{new_update['str']}'''
+        )
 
       # task runs every 30 seconds; infinitely
       await asyncio.sleep(30)
