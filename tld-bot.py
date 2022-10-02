@@ -40,9 +40,10 @@ class TldDiscordClient(discord.Client):
     channel_buil = self.get_channel(492923251329204224) # TLD discord -- #nightly-builds
     
     # swy: since we turned #nightly-builds into an announcement channel we need to manually click
-    #      on the Publish button for them to appear/show up on servers that follow it.
+    #      on the Publish button for each of them to appear/show up on servers that follow it.
     #      This applies both to our Steam Workshop notifications, and the GitHub change webhook
     if message.channel == channel_buil and message.channel.type == discord.ChannelType.news:
+      print('Publishing message in announcement channel:', message, message.content)
       await message.publish()
 
     # swy: no weird commands here, boy!
