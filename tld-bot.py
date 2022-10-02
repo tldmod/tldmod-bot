@@ -26,8 +26,8 @@ if not 'DISCORD_TOKEN' in os.environ:
 #
 #      to act in name of an user/account you need to get the "access tokens"; you can get the user-access-token and user-access-token-secret for random accounts by running
 #      `twurl authorize -j -t $TWITTER_API_KEY -s $TWITTER_API_SECRET` (install that with `gem install twurl`) and retrieving the token and secret fields
-#      from your ~/.twurlrc file. If you just want to post from the account that owns the app/bot, you can grab just those user-access-tokens
-#      directly from https://developer.twitter.com/apps and skip the `twurl` OAuth 1.0 stuff shown above.
+#      from your ~/.twurlrc file. If you just want to post from the account that owns the app/bot, you *can't* just grab those user-access-tokens
+#      directly from https://developer.twitter.com/apps and skip the `twurl` OAuth 1.0 stuff shown above because those are *read-only* access.
 #
 #      By default Twitter only gives you "Essential" access, so you can't use the older 1.1 API that all the Internet talks about, (i.e. no `api = tweepy.API(auth); api.update_status(text)`)
 #      to send tweets you need to use the 2.0 API, which for tweepy means using the `tweepy.Client,` functions. Easy peasy. :(
