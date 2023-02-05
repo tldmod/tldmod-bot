@@ -51,6 +51,26 @@ def twitter_send_tweet(text):
     except Exception as e:
         print('  [!] exception while sending tweet. Ignoring:', e)
 
+def mastodon_send_toot(text):
+    # swy: keep twitter as fallback, for now
+    twitter_send_tweet(text)
+    # swy: much easier than interfacing with the Twitter API, to get the token for other accounts we'd need to use OAuth
+    #      but as we only want to post on the account that owns the bots we get the token directly, as long as we have the write:status permission
+    try:
+        import requests
+    except:
+        print('  [e] cannot send toots because the request module is missing; skipping.')
+        return
+
+    if not all(var in os.environ  for var in ('MASTODON_ACCOUNT_ACCESS_TOKEN', 'MASTODON_ACCOUNT_ACCESS_URL')):
+        print('  [e] cannot send toots; you are missing the various keys and tokens needed to call the Mastodon API; skipping.')
+        return
+
+    try:
+      requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
+    except Exception as e:
+        print('  [!] exception while sending toot. Ignoring:', e)
+
 # swy: implement our bot thingie
 class TldDiscordClient(discord.Client):
   def __init__(self, *args, **kwargs):
@@ -163,7 +183,7 @@ class TldDiscordClient(discord.Client):
           f.write('%u' % int(time.mktime(base_date.timetuple())))
 
         # swy: notify the twitter people from @tldmod :)
-        twitter_send_tweet(
+        mastodon_send_toot(
           f'''New Steam Workshop update — {new_update['date'].strftime("%Y-%m-%d %H:%M")}.\n\n''' +
           f'''Good news, we have deployed a new Workshop update. Take a look at our updated TLD changelog here: https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#{new_update['str']}'''
         )

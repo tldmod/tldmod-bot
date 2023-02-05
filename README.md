@@ -19,6 +19,10 @@ export TWITTER_API_SECRET='3kl3kl34jagladfjkag78df7878df87agjk3bjkq34kngjkgak'
 export TWITTER_ACCOUNT_ACCESS_TOKEN='7603448958-klñafsdf98adafjkafnknkaggjkagjkgajklasd'
 export TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET='545jsgsgiojiogfjagklsklasdfklfklñ5ga9agr9$g'
 
+# swy: generate your own app from: https://botsin.space/settings/applications/new
+export MASTODON_ACCOUNT_ACCESS_TOKEN='k-76kLl3nnjeeeuckj6sdFGñl9k8k7k65h3hb44k7dd'
+export MASTODON_ACCOUNT_ACCESS_URL='botsin.space'
+
 python -u tld-bot.py 2>&1 | tee -a discord.out
 ```
 
