@@ -134,6 +134,13 @@ class TldDiscordClient(discord.Client):
               @discord.ui.select(placeholder=question_text, min_values = 3, max_values = 3, options = options)
               async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
                 print("click")
+
+                if len(set(select.values).intersection(rand_answers_good)) == 3:
+                  print("good")
+                else:
+                  print("bad")
+
+                return 
                 await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!", ephemeral=True)
                 unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
 
