@@ -89,6 +89,81 @@ class TldDiscordClient(discord.Client):
     print(self.user.id)
     print('------')
 
+
+
+    class Question(discord.ui.Modal, title='Questionnaire Response'):
+      name = discord.ui.TextInput(label='Name')
+      answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
+      async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
+
+    class Buttons(discord.ui.View):
+        def __init__(self):
+          super().__init__()
+          self.add_item(discord.ui.Button(label="Visit the mod's homepage", style=discord.ButtonStyle.link, url="https://tldmod.github.io"))
+
+        @discord.ui.button(label="Verify my account",style=discord.ButtonStyle.blurple) # or .primary
+        async def blurple_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+            quest = Question()
+            await interaction.response.send_message("LOL", ephemeral=True)
+
+        @discord.ui.select(placeholder='Heh.', min_values = 2, max_values = 3, options = [ # the list of options from which users can choose, a required field
+            discord.SelectOption(
+                label="Vanilla",
+                description="Pick this if you like vanilla!"
+            ),
+            discord.SelectOption(
+                label="Chocolate",
+                description="Pick this if you like chocolate!"
+            ),
+            discord.SelectOption(
+                label="Strawberry",
+                description="Pick this if you like strawberry!"
+            )
+        ])
+        async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
+          print("click")
+          await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!")
+
+    class ControlPanel(discord.ui.View):
+        def __init__(self):
+            super().__init__(timeout=None) # timeout of the view must be set to None
+            print(self.children)
+            self.on = self.children[0]
+            self.off = self.children[1]
+            self.remove_item(self.on)
+            self.remove_item(self.off)
+
+        async def toggle(interaction: discord.Interaction, state):
+            if state == True:
+              self.add_item(self.on)
+              self.remove_item(self.off)
+            else:
+              self.add_item(self.off)
+              self.remove_item(self.on)
+            await interaction.response.edit_message(view=self)
+
+        @discord.ui.button(label="Stop the verification gate", style=discord.ButtonStyle.red, custom_id="checju")
+        async def off_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+            #await self.toggle(interaction, False)
+              self.remove_item(button)
+              self.add_item(self.on)
+              await interaction.response.edit_message(view=self)
+
+        @discord.ui.button(label='Enable the verification gate', style=discord.ButtonStyle.green, custom_id="checju_en")
+        async def on_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+            #await self.toggle(interaction, True)
+              self.remove_item(button)
+              #self.add_item(self.on)
+              await interaction.response.edit_message(view=self)
+
+    channel_test = self.get_channel(470890531061366787) # Swyter test -- #general
+    view=Buttons()
+    #view.add_item(discord.ui.Button(label="URL Button",style=discord.ButtonStyle.link,url="https://github.com/lykn"))
+    #self.add_view(view)
+    await channel_test.send("HELLO!", view=view)
+
+
   async def on_message(self, message):
     channel_buil = self.get_channel(492923251329204224) # TLD discord -- #nightly-builds
     
