@@ -87,10 +87,14 @@ class TldDiscordValidator(discord.ext.commands.Cog):
   def __init__(self, bot: discord.ext.commands.Bot, log_to_channel):
     self.bot = bot
     self.log_to_channel = log_to_channel
+
     print('[i] doors-of-durin validator plug-in ready')
 
   @discord.ext.commands.Cog.listener()
   async def on_ready(self):
+    self.channel_test = self.bot.get_channel( 470890531061366787) # Swyter test -- #general
+    self.channel_door = self.bot.get_channel(1090711662320955563) # The Last Days -- #doors-of-durin
+
     # swy: there's a permanent message with a button (TldVerifyPresentation), when clicking it we
     #      create a random quiz (TldVerifyQuiz) that only the clicker can see
     class TldVerifyPresentation(discord.ui.View):
@@ -115,14 +119,14 @@ class TldDiscordValidator(discord.ext.commands.Cog):
           # swy: fill out the combobox; we need to randomize the order again after mixing the good and bad ones
           question_text = rand_quest['question']
           answers_all   = (rand_answers_good + rand_answers_bad); random.shuffle(answers_all)
-          options = [discord.SelectOption(label=answer)  for answer in answers_all]
+          ans_options   = [discord.SelectOption(label=cur_answer)  for cur_answer in answers_all]
 
           class TldVerifyQuiz(discord.ui.View):
               def __init__(self):
                 super().__init__(timeout=30)
                 self.rand_answers_good = rand_answers_good
 
-              @discord.ui.select(placeholder=question_text, min_values = 3, max_values = 3, options = options)
+              @discord.ui.select(placeholder=question_text, min_values = 3, max_values = 3, options = ans_options)
               async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
                 print("click")
 
@@ -141,17 +145,14 @@ class TldDiscordValidator(discord.ext.commands.Cog):
                 if unverified_role:
                   await interaction.user.remove_roles(unverified_role)
 
-                await client.log_to_channel(interaction.user, "has **passed** validation by responding {rand_answers_good}.")
+                await client.log_to_channel(interaction.user, f"has **passed** validation by responding {rand_answers_good}.")
 
           await interaction.response.send_message("Respond to the following question:", view=TldVerifyQuiz(), ephemeral=True)
-
-    channel_test = self.bot.get_channel(470890531061366787) # Swyter test -- #general
-    channel_unve = self.bot.get_channel(1090711662320955563) # Swyter test -- #general
 
     # swy: make the first post's buttons persistent across bot reboots
     self.bot.add_view(TldVerifyPresentation())
 
-    #await channel_unve.send(
+    #await self.channel_door.send(
     #  "As much as the team hates to do this, we're receiving too much spam from new accounts, lately. 🐧\n" +
     #  "So we need to make sure you are a real person to let you in. Pretty easy; a one-question quiz about *The Lord of the Rings*!", view=TldVerifyView()
     #)
@@ -159,20 +160,19 @@ class TldDiscordValidator(discord.ext.commands.Cog):
   @discord.ext.commands.Cog.listener()
   async def on_member_join(self, member : discord.Member):
     print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
-    await client.log_to_channel(member, f" has joined. Account created at {member.created_at}.")
+    await client.log_to_channel(member, f" has **joined**. Account created at {member.created_at}.")
 
   @discord.ext.commands.Cog.listener()
   async def on_member_update(self, before: discord.Member, after: discord.Member):
     if after.name == "Swyter Test" and not after.pending and before.pending != after.pending:
       print('User', after)
 
-      channel_unve = self.get_channel(1090711662320955563) # Swyter test -- #general
       unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
 
       if unverified_role:
         await after.add_roles(unverified_role)
-        await client.log_to_channel(after, f"has **passed** the Rules Screening check. Quarantining and adding Unverified role.")
-        mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
+        await client.log_to_channel(after, f"has **passed** the **Rules Screening** check. Quarantining and adding *Unverified* role.")
+        mes = await self.channel_door.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
         await mes.delete(delay=2) # swy: phantom ping
 
 
