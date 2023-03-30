@@ -153,7 +153,7 @@ class TldDiscordValidator(discord.ext.commands.Cog):
     self.bot.add_view(TldVerifyPresentation())
 
     #await self.channel_door.send(
-    #  "As much as the team hates to do this, we're receiving too much spam from new accounts, lately. 🐧\n" +
+    #  "As much as the team hates to do this, we've been receiving too much spam from new accounts lately. 🐧\n" +
     #  "So we need to make sure you are a real person to let you in. Pretty easy; a one-question quiz about *The Lord of the Rings*!", view=TldVerifyView()
     #)
 
@@ -177,7 +177,7 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
 
 
-# swy: implement our bot thingie
+# swy: implement our bot thingie; discord.ext.commands.Bot is a higher level derivative of discord.Client we used until very recently
 class TldDiscordClient(discord.ext.commands.Bot):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
@@ -259,7 +259,8 @@ class TldDiscordClient(discord.ext.commands.Bot):
     if message.author == self.user or type(message.author) is not discord.Member or message.author.bot:
       return
 
-    print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"))
+    print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"), message.created_at, message.channel.name)
+    self.log_to_channel(message.author, f"someone has deleted {message.author.mention}'s message: `{message.content}`, made at _{message.created_at}_, in {message.channel.mention}/`{message.channel.name} ({message.channel.id})`.")
 
   async def workshop_background_task(self):
     await self.wait_until_ready()
@@ -309,6 +310,7 @@ class TldDiscordClient(discord.ext.commands.Bot):
       # task runs every 30 seconds; infinitely
       await asyncio.sleep(30)
 
+# --
 
 intents = discord.Intents.default()
 intents.members = True # swy: we need this to be able to see the joins and changes
@@ -332,7 +334,7 @@ while True:
     traceback.print_exc()
     pass
 
-  # cancel all tasks lingering
+  # swy: cancel all lingering tasks and close shop
   except KeyboardInterrupt:
     loop.run_until_complete(client.change_presence(status=discord.Status.offline))
     print("[i] ctrl-c detected")
