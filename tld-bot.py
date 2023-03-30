@@ -84,17 +84,13 @@ questions = [
 ]
 
 class TldDiscordValidator(discord.ext.commands.Cog):
-  def __init__(self, bot: discord.ext.commands.Bot):
-      self.bot = bot
-      
-  async def log_to_channel(self, user: discord.Member, text):
-    channel_log = user.guild.get_channel(1090685607635865710)
-    if channel_log:
-      await channel_log.send(f"{user.mention} `{user.name}#{user.discriminator} ({user.id})` {text}")
+  def __init__(self, bot: discord.ext.commands.Bot, log_to_channel):
+    self.bot = bot
+    self.log_to_channel = log_to_channel
+    print('[i] doors-of-durin validator plug-in ready')
 
   @discord.ext.commands.Cog.listener()
   async def on_ready(self):
-    print('Cog')
     class Question(discord.ui.Modal, title='Questionnaire Response'):
       name = discord.ui.TextInput(label='Name')
       answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
@@ -102,7 +98,7 @@ class TldDiscordValidator(discord.ext.commands.Cog):
         await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
 
 
-    class TLDVerifyView(discord.ui.View):
+    class TldVerifyView(discord.ui.View):
         def __init__(self):
           super().__init__(timeout=None)
           self.add_item(discord.ui.Button(label="Visit the mod's homepage", style=discord.ButtonStyle.link, url="https://tldmod.github.io"))
@@ -110,19 +106,23 @@ class TldDiscordValidator(discord.ext.commands.Cog):
         @discord.ui.button(label="Verify my account", style=discord.ButtonStyle.blurple, custom_id='tld:verify')
         async def blurple_button(self, interaction: discord.Interaction, button: discord.ui.Button):
 
+          # swy: select one question from the lot
           rand_quest = random.choice(questions)
 
+          # swy: randomize the order so that the first three aren't always the same
           random.shuffle(rand_quest['answers_good'])
           random.shuffle(rand_quest['answers_bad' ])
 
+          # swy: get the first three of each after shuffling
           rand_answers_good = rand_quest['answers_good'][:3]
           rand_answers_bad  = rand_quest['answers_bad' ][:3]
 
+          # swy: fill out the combobox; we need to randomize the order again after mixing the good and bad ones
           question_text = rand_quest['question']
           answers_all   = (rand_answers_good + rand_answers_bad); random.shuffle(answers_all)
           options = [discord.SelectOption(label=answer)  for answer in answers_all]
 
-          class TLDVerifyQuiz(discord.ui.View):
+          class TldVerifyQuiz(discord.ui.View):
               def __init__(self):
                 super().__init__(timeout=30)
                 self.rand_answers_good = rand_answers_good
@@ -134,10 +134,8 @@ class TldDiscordValidator(discord.ext.commands.Cog):
                 # swy: are all the options correct? even one bad one will cause it to fail
                 if len(set(select.values).intersection(rand_answers_good)) != len(rand_answers_good):
                   self.is_finished=True
-                  #select.disabled=True
-                  #await interaction.response.edit_message(view=self)
                   await interaction.response.send_message(f"Darn, try again!", ephemeral=True)
-                  await client.log_to_channel(interaction.user, f"has failed validation by responding {select.values}.")
+                  await client.log_to_channel(interaction.user, f"has **failed** validation by responding {select.values}.")
                   return
 
                 await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!\nNow you are in. Head over to {interaction.guild.rules_channel.mention}.", ephemeral=True)
@@ -146,9 +144,9 @@ class TldDiscordValidator(discord.ext.commands.Cog):
                 if unverified_role:
                   await interaction.user.remove_roles(unverified_role)
 
-                await client.log_to_channel(interaction.user, "has passed validation by responding {rand_answers_good}.")
+                await client.log_to_channel(interaction.user, "has **passed** validation by responding {rand_answers_good}.")
 
-          quest = TLDVerifyQuiz()
+          quest = TldVerifyQuiz()
           await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
 
     class ControlPanel(discord.ui.View):
@@ -186,11 +184,13 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
     channel_test = self.bot.get_channel(470890531061366787) # Swyter test -- #general
     channel_unve = self.bot.get_channel(1090711662320955563) # Swyter test -- #general
-    #view.add_item(discord.ui.Button(label="URL Button",style=discord.ButtonStyle.link,url="https://github.com/lykn"))
-    self.bot.add_view(TLDVerifyView())
+
+    # swy: make the buttons persistent across bot reboots
+    self.bot.add_view(TldVerifyView())
+
     #await channel_unve.send(
     #  "As much as the team hates to do this, we're receiving too much spam from new accounts, lately. 🐧\n" +
-    #  "So we need to make sure you are a real person to let you in. Pretty easy; a one-question quiz about *The Lord of the Rings*!", view=TLDVerifyView()
+    #  "So we need to make sure you are a real person to let you in. Pretty easy; a one-question quiz about *The Lord of the Rings*!", view=TldVerifyView()
     #)
 
   @discord.ext.commands.Cog.listener()
@@ -203,13 +203,12 @@ class TldDiscordValidator(discord.ext.commands.Cog):
     if after.name == "Swyter Test" and not after.pending and before.pending != after.pending:
       print('User', after)
 
-      unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
-
       channel_unve = self.get_channel(1090711662320955563) # Swyter test -- #general
+      unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
 
       if unverified_role:
         await after.add_roles(unverified_role)
-        await client.log_to_channel(after, f"has passed the Rules Screening check. Quarantining and adding Unverified role.")
+        await client.log_to_channel(after, f"has **passed** the Rules Screening check. Quarantining and adding Unverified role.")
         mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
         await mes.delete(delay=2) # swy: phantom ping
 
@@ -223,7 +222,7 @@ class TldDiscordClient(discord.ext.commands.Bot):
   async def setup_hook(self):
     # create the background task and run it in the background
     self.bg_task = self.loop.create_task(self.workshop_background_task())
-    await self.add_cog(TldDiscordValidator(self))
+    await self.add_cog(TldDiscordValidator(self, self.log_to_channel))
 
   async def on_ready(self):
     print('Logged in as')
@@ -288,7 +287,13 @@ class TldDiscordClient(discord.ext.commands.Bot):
     #  await channel_test.send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
     #  await member.guild.ban(member, reason='[Automatic] Suspected bot or automated account.')
 
-  async def on_message_delete(self, message):
+  async def on_message_delete(self, message: discord.Message):
+    # swy: we do not want the bot to report deleting itself or web-hooks
+    if message.is_system:
+      return
+    if message.author == self.user or type(message.author) is not discord.Member or message.author.bot:
+      return
+
     print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"))
 
   async def workshop_background_task(self):
@@ -356,6 +361,7 @@ if os.name != 'nt':
 while True:
   try:
     loop.run_until_complete(client.start(os.environ["DISCORD_TOKEN"]))
+    
   except connector.ClientConnectorError:
     traceback.print_exc()
     pass
