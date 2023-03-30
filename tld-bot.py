@@ -92,6 +92,11 @@ class TldDiscordClient(discord.Client):
     # create the background task and run it in the background
     self.bg_task = self.loop.create_task(self.workshop_background_task())
 
+  async def log_to_channel(self, user: discord.Member, text):
+    channel_log = user.guild.get_channel(1090685607635865710)
+    if channel_log:
+      await channel_log.send(f"{user.mention} `{user.name}#{user.discriminator} ({user.id})` {text}")
+
   async def on_ready(self):
     print('Logged in as')
     print(self.user.name)
@@ -140,8 +145,7 @@ class TldDiscordClient(discord.Client):
                   #select.disabled=True
                   #await interaction.response.edit_message(view=self)
                   await interaction.response.send_message(f"Darn, try again!", ephemeral=True)
-                  channel_log = interaction.user.guild.get_channel(1090685607635865710)
-                  await channel_log.send(f"{interaction.user.mention} has failed validation by responding {select.values}.")
+                  await client.log_to_channel(interaction.user, f"has failed validation by responding {select.values}.")
                   return
 
                 await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!\nNow you are in. Head over to {interaction.guild.rules_channel.mention}.", ephemeral=True)
@@ -150,8 +154,7 @@ class TldDiscordClient(discord.Client):
                 if unverified_role:
                   await interaction.user.remove_roles(unverified_role)
 
-                channel_log = interaction.user.guild.get_channel(1090685607635865710)
-                await channel_log.send(f"{interaction.user.mention} has passed validation by responding {rand_answers_good}.")
+                await client.log_to_channel(interaction.user, "has passed validation by responding {rand_answers_good}.")
 
           quest = TLDVerifyQuiz()
           await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
@@ -233,10 +236,9 @@ class TldDiscordClient(discord.Client):
       msg = 'Hello {0.author.mention}'.format(message)
       await message.channel.send(msg)
 
-  async def on_member_join(self, member):
+  async def on_member_join(self, member : discord.Member):
     print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
-    channel_log = self.get_channel(1090685607635865710)
-    await channel_log.send(f"{member.mention} has joined.")
+    await client.log_to_channel(member, f" has joined. Account created at {member.created_at}.")
 
     #if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
     #   member.name.islower() and \
@@ -264,10 +266,9 @@ class TldDiscordClient(discord.Client):
 
       if unverified_role:
         await after.add_roles(unverified_role)
-        channel_log = self.get_channel(1090685607635865710)
-        await channel_log.send(f"{after.mention} has passed the Rules Screening check. Quarantining and adding Unverified role.")
+        await client.log_to_channel(after, f"has passed the Rules Screening check. Quarantining and adding Unverified role.")
         mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
-        await mes.delete(delay=2)
+        await mes.delete(delay=2) # swy: phantom ping
 
   async def on_message_delete(self, message):
     print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"))
