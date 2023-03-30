@@ -76,7 +76,7 @@ def mastodon_send_toot(text):
 
 import random
 
-# swy: the final question will have three good and three bad, have some extras to mix them up
+# swy: the final question will have three good and three bad answers, so have some extras of each to mix them up
 questions = [
   {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits"],  'answers_bad': ["Harad", "Mordor", "Isengard", "Umbar"]   },
   {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Faramir", "Bilbo", "Galadriel", "Gollum"]},
@@ -91,13 +91,14 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
   @discord.ext.commands.Cog.listener()
   async def on_ready(self):
-    class Question(discord.ui.Modal, title='Questionnaire Response'):
-      name = discord.ui.TextInput(label='Name')
-      answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
-      async def on_submit(self, interaction: discord.Interaction):
-        await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
+    #class Question(discord.ui.Modal, title='Questionnaire Response'):
+    #  name = discord.ui.TextInput(label='Name')
+    #  answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
+    #  async def on_submit(self, interaction: discord.Interaction):
+    #    await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
 
-
+    # swy: there's a permanent message with a button (TldVerifyView), when clicking it we
+    #      create a random quiz (TldVerifyQuiz) that only the clicker can see
     class TldVerifyView(discord.ui.View):
         def __init__(self):
           super().__init__(timeout=None)
@@ -149,38 +150,38 @@ class TldDiscordValidator(discord.ext.commands.Cog):
           quest = TldVerifyQuiz()
           await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
 
-    class ControlPanel(discord.ui.View):
-        def __init__(self):
-            super().__init__(timeout=None) # timeout of the view must be set to None
-            print(self.children)
-            self.on = self.children[0]
-            self.off = self.children[1]
-            self.remove_item(self.on)
-            self.remove_item(self.off)
-
-        async def toggle(interaction: discord.Interaction, state):
-            if state == True:
-              self.add_item(self.on)
-              self.remove_item(self.off)
-            else:
-              self.add_item(self.off)
-              self.remove_item(self.on)
-            await interaction.response.edit_message(view=self)
-
-        @discord.ui.button(label="Stop the verification gate", style=discord.ButtonStyle.red, custom_id="checju")
-        async def off_button(self, interaction:discord.Interaction, button:discord.ui.Button):
-            #await self.toggle(interaction, False)
-              self.remove_item(button)
-              self.add_item(self.on)
-              await interaction.response.edit_message(view=self)
-
-        @discord.ui.button(label='Enable the verification gate', style=discord.ButtonStyle.green, custom_id="checju_en")
-        async def on_button(self, interaction:discord.Interaction, button:discord.ui.Button):
-            #await self.toggle(interaction, True)
-              self.remove_item(button)
-              #self.add_item(self.on)
-              interaction.guild.rol
-              await interaction.response.edit_message(view=self)
+    #class ControlPanel(discord.ui.View):
+    #    def __init__(self):
+    #        super().__init__(timeout=None) # timeout of the view must be set to None
+    #        print(self.children)
+    #        self.on = self.children[0]
+    #        self.off = self.children[1]
+    #        self.remove_item(self.on)
+    #        self.remove_item(self.off)
+    #
+    #    async def toggle(interaction: discord.Interaction, state):
+    #        if state == True:
+    #          self.add_item(self.on)
+    #          self.remove_item(self.off)
+    #        else:
+    #          self.add_item(self.off)
+    #          self.remove_item(self.on)
+    #        await interaction.response.edit_message(view=self)
+    #
+    #    @discord.ui.button(label="Stop the verification gate", style=discord.ButtonStyle.red, custom_id="checju")
+    #    async def off_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+    #        #await self.toggle(interaction, False)
+    #          self.remove_item(button)
+    #          self.add_item(self.on)
+    #          await interaction.response.edit_message(view=self)
+    #
+    #    @discord.ui.button(label='Enable the verification gate', style=discord.ButtonStyle.green, custom_id="checju_en")
+    #    async def on_button(self, interaction:discord.Interaction, button:discord.ui.Button):
+    #        #await self.toggle(interaction, True)
+    #          self.remove_item(button)
+    #          #self.add_item(self.on)
+    #          interaction.guild.rol
+    #          await interaction.response.edit_message(view=self)
 
     channel_test = self.bot.get_channel(470890531061366787) # Swyter test -- #general
     channel_unve = self.bot.get_channel(1090711662320955563) # Swyter test -- #general
@@ -220,8 +221,10 @@ class TldDiscordClient(discord.ext.commands.Bot):
     super().__init__(*args, **kwargs)
 
   async def setup_hook(self):
-    # create the background task and run it in the background
+    # swy: create the background task and run it in the background
     self.bg_task = self.loop.create_task(self.workshop_background_task())
+
+    # swy: enable the member verification plug-in
     await self.add_cog(TldDiscordValidator(self, self.log_to_channel))
 
   async def on_ready(self):
@@ -346,7 +349,8 @@ class TldDiscordClient(discord.ext.commands.Bot):
 
 
 intents = discord.Intents.default()
-intents.members = True
+intents.members = True # swy: we need this to be able to see the joins and changes
+
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient(intents=intents, command_prefix=None)
 loop = asyncio.get_event_loop()
