@@ -76,6 +76,7 @@ class TldDiscordClient(discord.Client):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
 
+  async def setup_hook(self):
     # create the background task and run it in the background
     self.bg_task = self.loop.create_task(self.workshop_background_task())
 
@@ -191,15 +192,27 @@ class TldDiscordClient(discord.Client):
       # task runs every 30 seconds; infinitely
       await asyncio.sleep(30)
 
+
+intents = discord.Intents.default()
+
 # swy: launch our bot thingie, allow for Ctrl + C
-client = TldDiscordClient()
+client = TldDiscordClient(intents=intents)
+
+import traceback
+from aiohttp import connector
+loop = asyncio.get_event_loop()
 
 while True:
   try:
-    client.loop.run_until_complete(client.start(os.environ["DISCORD_TOKEN"]))
+    loop.run_until_complete(client.start(os.environ["DISCORD_TOKEN"]))
+  except Exception: # connector.ClientConnectorError:
+    traceback.print_exc()
+    pass
+
+  # cancel all tasks lingering
   except KeyboardInterrupt:
-    client.loop.run_until_complete(client.logout())
-    # cancel all tasks lingering
-  finally:
-    client.loop.close()
+    client.loop.run_until_complete(client.change_presence(status=discord.Status.offline))
+    print("[i] ctrl-c detected")
+    loop.run_until_complete(client.close())
+    print("[-] exiting...")
     sys.exit(0)
