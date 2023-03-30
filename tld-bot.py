@@ -91,15 +91,9 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
   @discord.ext.commands.Cog.listener()
   async def on_ready(self):
-    #class Question(discord.ui.Modal, title='Questionnaire Response'):
-    #  name = discord.ui.TextInput(label='Name')
-    #  answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
-    #  async def on_submit(self, interaction: discord.Interaction):
-    #    await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
-
-    # swy: there's a permanent message with a button (TldVerifyView), when clicking it we
+    # swy: there's a permanent message with a button (TldVerifyPresentation), when clicking it we
     #      create a random quiz (TldVerifyQuiz) that only the clicker can see
-    class TldVerifyView(discord.ui.View):
+    class TldVerifyPresentation(discord.ui.View):
         def __init__(self):
           super().__init__(timeout=None)
           self.add_item(discord.ui.Button(label="Visit the mod's homepage", style=discord.ButtonStyle.link, url="https://tldmod.github.io"))
@@ -140,6 +134,8 @@ class TldDiscordValidator(discord.ext.commands.Cog):
                   return
 
                 await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!\nNow you are in. Head over to {interaction.guild.rules_channel.mention}.", ephemeral=True)
+
+                # swy: unquarantine the user by getting rid of this role
                 unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
 
                 if unverified_role:
@@ -147,47 +143,13 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
                 await client.log_to_channel(interaction.user, "has **passed** validation by responding {rand_answers_good}.")
 
-          quest = TldVerifyQuiz()
-          await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
-
-    #class ControlPanel(discord.ui.View):
-    #    def __init__(self):
-    #        super().__init__(timeout=None) # timeout of the view must be set to None
-    #        print(self.children)
-    #        self.on = self.children[0]
-    #        self.off = self.children[1]
-    #        self.remove_item(self.on)
-    #        self.remove_item(self.off)
-    #
-    #    async def toggle(interaction: discord.Interaction, state):
-    #        if state == True:
-    #          self.add_item(self.on)
-    #          self.remove_item(self.off)
-    #        else:
-    #          self.add_item(self.off)
-    #          self.remove_item(self.on)
-    #        await interaction.response.edit_message(view=self)
-    #
-    #    @discord.ui.button(label="Stop the verification gate", style=discord.ButtonStyle.red, custom_id="checju")
-    #    async def off_button(self, interaction:discord.Interaction, button:discord.ui.Button):
-    #        #await self.toggle(interaction, False)
-    #          self.remove_item(button)
-    #          self.add_item(self.on)
-    #          await interaction.response.edit_message(view=self)
-    #
-    #    @discord.ui.button(label='Enable the verification gate', style=discord.ButtonStyle.green, custom_id="checju_en")
-    #    async def on_button(self, interaction:discord.Interaction, button:discord.ui.Button):
-    #        #await self.toggle(interaction, True)
-    #          self.remove_item(button)
-    #          #self.add_item(self.on)
-    #          interaction.guild.rol
-    #          await interaction.response.edit_message(view=self)
+          await interaction.response.send_message("Respond to the following question:", view=TldVerifyQuiz(), ephemeral=True)
 
     channel_test = self.bot.get_channel(470890531061366787) # Swyter test -- #general
     channel_unve = self.bot.get_channel(1090711662320955563) # Swyter test -- #general
 
-    # swy: make the buttons persistent across bot reboots
-    self.bot.add_view(TldVerifyView())
+    # swy: make the first post's buttons persistent across bot reboots
+    self.bot.add_view(TldVerifyPresentation())
 
     #await channel_unve.send(
     #  "As much as the team hates to do this, we're receiving too much spam from new accounts, lately. 🐧\n" +
