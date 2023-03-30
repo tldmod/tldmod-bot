@@ -2,7 +2,7 @@
 import os
 import sys
 import asyncio
-import discord
+import discord, discord.ext.commands
 import traceback
 import datetime, time, signal
 
@@ -83,26 +83,18 @@ questions = [
   {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Trolls", "Orcs", "Dragons", "Dwarves"], 'answers_bad': ["Centaurs", "Undead", "Lizards", "Gnomes"]   },
 ]
 
-# swy: implement our bot thingie
-class TldDiscordClient(discord.Client):
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-
-  async def setup_hook(self):
-    # create the background task and run it in the background
-    self.bg_task = self.loop.create_task(self.workshop_background_task())
-
+class TldDiscordValidator(discord.ext.commands.Cog):
+  def __init__(self, bot: discord.ext.commands.Bot):
+      self.bot = bot
+      
   async def log_to_channel(self, user: discord.Member, text):
     channel_log = user.guild.get_channel(1090685607635865710)
     if channel_log:
       await channel_log.send(f"{user.mention} `{user.name}#{user.discriminator} ({user.id})` {text}")
 
+  @discord.ext.commands.Cog.listener()
   async def on_ready(self):
-    print('Logged in as')
-    print(self.user.name)
-    print(self.user.id)
-    print('------')
-
+    print('Cog')
     class Question(discord.ui.Modal, title='Questionnaire Response'):
       name = discord.ui.TextInput(label='Name')
       answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
@@ -192,15 +184,57 @@ class TldDiscordClient(discord.Client):
               interaction.guild.rol
               await interaction.response.edit_message(view=self)
 
-    channel_test = self.get_channel(470890531061366787) # Swyter test -- #general
-    channel_unve = self.get_channel(1090711662320955563) # Swyter test -- #general
+    channel_test = self.bot.get_channel(470890531061366787) # Swyter test -- #general
+    channel_unve = self.bot.get_channel(1090711662320955563) # Swyter test -- #general
     #view.add_item(discord.ui.Button(label="URL Button",style=discord.ButtonStyle.link,url="https://github.com/lykn"))
-    self.add_view(TLDVerifyView())
+    self.bot.add_view(TLDVerifyView())
     #await channel_unve.send(
     #  "As much as the team hates to do this, we're receiving too much spam from new accounts, lately. 🐧\n" +
     #  "So we need to make sure you are a real person to let you in. Pretty easy; a one-question quiz about *The Lord of the Rings*!", view=TLDVerifyView()
     #)
 
+  @discord.ext.commands.Cog.listener()
+  async def on_member_join(self, member : discord.Member):
+    print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
+    await client.log_to_channel(member, f" has joined. Account created at {member.created_at}.")
+
+  @discord.ext.commands.Cog.listener()
+  async def on_member_update(self, before: discord.Member, after: discord.Member):
+    if after.name == "Swyter Test" and not after.pending and before.pending != after.pending:
+      print('User', after)
+
+      unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
+
+      channel_unve = self.get_channel(1090711662320955563) # Swyter test -- #general
+
+      if unverified_role:
+        await after.add_roles(unverified_role)
+        await client.log_to_channel(after, f"has passed the Rules Screening check. Quarantining and adding Unverified role.")
+        mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
+        await mes.delete(delay=2) # swy: phantom ping
+
+
+
+# swy: implement our bot thingie
+class TldDiscordClient(discord.ext.commands.Bot):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+
+  async def setup_hook(self):
+    # create the background task and run it in the background
+    self.bg_task = self.loop.create_task(self.workshop_background_task())
+    await self.add_cog(TldDiscordValidator(self))
+
+  async def on_ready(self):
+    print('Logged in as')
+    print(self.user.name)
+    print(self.user.id)
+    print('------')
+
+  async def log_to_channel(self, user: discord.Member, text):
+    channel_log = user.guild.get_channel(1090685607635865710)
+    if channel_log:
+      await channel_log.send(f"{user.mention} `{user.name}#{user.discriminator} ({user.id})` {text}")
 
   async def on_message(self, message):
     channel_buil = self.get_channel(492923251329204224) # TLD discord -- #nightly-builds
@@ -237,9 +271,7 @@ class TldDiscordClient(discord.Client):
       await message.channel.send(msg)
 
   async def on_member_join(self, member : discord.Member):
-    print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
-    await client.log_to_channel(member, f" has joined. Account created at {member.created_at}.")
-
+    return
     #if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
     #   member.name.islower() and \
     #   len(member.name) < 5 and \
@@ -255,20 +287,6 @@ class TldDiscordClient(discord.Client):
     #  # swy: send a message to the #off-topic channel
     #  await channel_test.send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
     #  await member.guild.ban(member, reason='[Automatic] Suspected bot or automated account.')
-
-  async def on_member_update(self, before: discord.Member, after: discord.Member):
-    if after.name == "Swyter Test" and not after.pending and before.pending != after.pending:
-      print('User', after)
-
-      unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
-
-      channel_unve = self.get_channel(1090711662320955563) # Swyter test -- #general
-
-      if unverified_role:
-        await after.add_roles(unverified_role)
-        await client.log_to_channel(after, f"has passed the Rules Screening check. Quarantining and adding Unverified role.")
-        mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
-        await mes.delete(delay=2) # swy: phantom ping
 
   async def on_message_delete(self, message):
     print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"))
@@ -325,11 +343,12 @@ class TldDiscordClient(discord.Client):
 intents = discord.Intents.default()
 intents.members = True
 # swy: launch our bot thingie, allow for Ctrl + C
-client = TldDiscordClient(intents=intents)
+client = TldDiscordClient(intents=intents, command_prefix=None)
 loop = asyncio.get_event_loop()
 
 def handle_exit():
     raise KeyboardInterrupt
+
 if os.name != 'nt':
   loop.add_signal_handler(signal.SIGTERM, handle_exit, signal.SIGTERM)
   loop.add_signal_handler(signal.SIGABRT, handle_exit, signal.SIGABRT, None)
