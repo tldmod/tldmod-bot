@@ -99,7 +99,7 @@ class TldDiscordClient(discord.Client):
 
     class Buttons(discord.ui.View):
         def __init__(self):
-          super().__init__()
+          super().__init__(timeout=None)
           self.add_item(discord.ui.Button(label="Visit the mod's homepage", style=discord.ButtonStyle.link, url="https://tldmod.github.io"))
 
         @discord.ui.button(label="Verify my account",style=discord.ButtonStyle.blurple) # or .primary
@@ -161,7 +161,10 @@ class TldDiscordClient(discord.Client):
     view=Buttons()
     #view.add_item(discord.ui.Button(label="URL Button",style=discord.ButtonStyle.link,url="https://github.com/lykn"))
     #self.add_view(view)
-    await channel_test.send("HELLO!", view=view)
+    await channel_test.send(
+      "As much as the team hates to do this, we're receiving too much spam from new accounts, lately. 🐧\n" +
+      "So we need to make sure you are a real person to let you in. Pretty easy; a one-question quiz about *The Lord of the Rings*!", view=view
+    )
 
 
   async def on_message(self, message):
