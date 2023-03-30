@@ -74,6 +74,16 @@ def mastodon_send_toot(text):
     except Exception as e:
         print('  [!] exception while sending toot. Ignoring:', e)
 
+import random
+
+# swy: the final question will have three good and three bad, have some extras to mix them up
+questions = [
+  {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits"],  'answers_bad': ["Harad", "Mordor", "Isengard", "Umbar"]   },
+  {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Faramir", "Bilbo", "Galadriel", "Gollum"]},
+  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Troll", "Orc", "Dragon", "Dwarf"],      'answers_bad': ["Centaur", "Undead", "Lizard", "Gnome"]   },
+]
+
+
 # swy: implement our bot thingie
 class TldDiscordClient(discord.Client):
   def __init__(self, *args, **kwargs):
@@ -89,8 +99,6 @@ class TldDiscordClient(discord.Client):
     print(self.user.id)
     print('------')
 
-
-
     class Question(discord.ui.Modal, title='Questionnaire Response'):
       name = discord.ui.TextInput(label='Name')
       answer = discord.ui.TextInput(label='Answer', style=discord.TextStyle.paragraph)
@@ -98,46 +106,42 @@ class TldDiscordClient(discord.Client):
         await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
 
 
-    class TLDVerifyQuiz(discord.ui.View):
-        def __init__(self):
-          super().__init__(timeout=30)
-
-        @discord.ui.select(placeholder='Which of these factions are good?', min_values = 2, max_values = 3, options = [
-            discord.SelectOption(
-                label="Gondor",
-            ),
-            discord.SelectOption(
-                label="Harad",
-            ),
-            discord.SelectOption(
-                label="Rohan",
-            ),
-            discord.SelectOption(
-                label="Mordor",
-            ),
-            discord.SelectOption(
-                label="Elves",
-            )
-        ])
-        async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
-          print("click")
-          await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!", ephemeral=True)
-          unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
-
-          if unverified_role:
-            await interaction.user.remove_roles(unverified_role)
-          
-
-
     class TLDVerifyView(discord.ui.View):
         def __init__(self):
           super().__init__(timeout=None)
           self.add_item(discord.ui.Button(label="Visit the mod's homepage", style=discord.ButtonStyle.link, url="https://tldmod.github.io"))
 
-        @discord.ui.button(label="Verify my account", style=discord.ButtonStyle.blurple, custom_id='tld:verify') # or .primary
+        @discord.ui.button(label="Verify my account", style=discord.ButtonStyle.blurple, custom_id='tld:verify')
         async def blurple_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-            quest = TLDVerifyQuiz()
-            await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
+
+          rand_quest = random.choice(questions)
+
+          random.shuffle(rand_quest['answers_good'])
+          random.shuffle(rand_quest['answers_bad' ])
+
+          rand_answers_good = rand_quest['answers_good'][:3]
+          rand_answers_bad  = rand_quest['answers_bad' ][:3]
+
+          question_text = rand_quest['question']
+          answers_all   = (rand_answers_good + rand_answers_bad); random.shuffle(answers_all)
+          options = [discord.SelectOption(label=answer)  for answer in answers_all]
+
+          class TLDVerifyQuiz(discord.ui.View):
+              def __init__(self):
+                super().__init__(timeout=30)
+                self.rand_answers_good = rand_answers_good
+
+              @discord.ui.select(placeholder=question_text, min_values = 3, max_values = 3, options = options)
+              async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
+                print("click")
+                await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!", ephemeral=True)
+                unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
+
+                if unverified_role:
+                  await interaction.user.remove_roles(unverified_role)
+
+          quest = TLDVerifyQuiz()
+          await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
 
     class ControlPanel(discord.ui.View):
         def __init__(self):
@@ -203,12 +207,10 @@ class TldDiscordClient(discord.Client):
 
     # swy: we do not want the bot to reply to itself or web-hooks
     if message.author == self.user or type(message.author) is not discord.Member or message.author.bot:
-#     print("Bot:", pprint(message.author))
       return
       
     # swy: ignore messages from users that aren't in the whitelist
     if not any(x in str(message.author.roles) for x in ['Swyter', 'Developer', 'Volunteer']):
-#     print("Ignored:", pprint(message.author))
       return
 
 #   print(pprint(message.author.roles))
