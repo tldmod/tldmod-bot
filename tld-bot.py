@@ -3,9 +3,12 @@ import os
 import sys
 import asyncio
 import discord
-from pprint import pprint
+import traceback
+import datetime, time, signal
 
-import datetime, time
+from pprint import pprint
+from aiohttp import connector
+
 from beautiful_soup import check_workshop_update
 
 # swy: ugly discord.log file boilerplate
@@ -197,21 +200,24 @@ intents = discord.Intents.default()
 
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient(intents=intents)
-
-import traceback
-from aiohttp import connector
 loop = asyncio.get_event_loop()
+
+def handle_exit():
+    raise KeyboardInterrupt
+if os.name != 'nt':
+  loop.add_signal_handler(signal.SIGTERM, handle_exit, signal.SIGTERM)
+  loop.add_signal_handler(signal.SIGABRT, handle_exit, signal.SIGABRT, None)
 
 while True:
   try:
     loop.run_until_complete(client.start(os.environ["DISCORD_TOKEN"]))
-  except Exception: # connector.ClientConnectorError:
+  except connector.ClientConnectorError:
     traceback.print_exc()
     pass
 
   # cancel all tasks lingering
   except KeyboardInterrupt:
-    client.loop.run_until_complete(client.change_presence(status=discord.Status.offline))
+    loop.run_until_complete(client.change_presence(status=discord.Status.offline))
     print("[i] ctrl-c detected")
     loop.run_until_complete(client.close())
     print("[-] exiting...")
