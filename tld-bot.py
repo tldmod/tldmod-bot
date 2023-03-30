@@ -80,9 +80,8 @@ import random
 questions = [
   {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits"],  'answers_bad': ["Harad", "Mordor", "Isengard", "Umbar"]   },
   {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Faramir", "Bilbo", "Galadriel", "Gollum"]},
-  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Troll", "Orc", "Dragon", "Dwarf"],      'answers_bad': ["Centaur", "Undead", "Lizard", "Gnome"]   },
+  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Trolls", "Orcs", "Dragons", "Dwarves"], 'answers_bad': ["Centaurs", "Undead", "Lizards", "Gnomes"]   },
 ]
-
 
 # swy: implement our bot thingie
 class TldDiscordClient(discord.Client):
@@ -135,12 +134,14 @@ class TldDiscordClient(discord.Client):
               async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
                 print("click")
 
-                if len(set(select.values).intersection(rand_answers_good)) == 3:
-                  print("good")
-                else:
-                  print("bad")
+                # swy: are all the options correct? even one bad one will cause it to fail
+                if len(set(select.values).intersection(rand_answers_good)) != len(rand_answers_good):
+                  self.is_finished=True
+                  #select.disabled=True
+                  #await interaction.response.edit_message(view=self)
+                  await interaction.response.send_message(f"Darn, try again!", ephemeral=True)
+                  return
 
-                return 
                 await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!", ephemeral=True)
                 unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
 
