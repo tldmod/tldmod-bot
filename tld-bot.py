@@ -221,22 +221,35 @@ class TldDiscordClient(discord.Client):
   async def on_member_join(self, member):
     print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
 
-    if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
-       member.name.islower() and \
-       len(member.name) < 5 and \
-       member.name == member.display_name and \
-       member.avatar == None and \
-       len(member.roles) <= 1:
-       
-      channel_test = member.guild.system_channel
-      
-      if (not channel_test):
-        channel_test = self.get_channel(470890531061366787)
-       
-      # swy: send a message to the #off-topic channel
-      await channel_test.send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
-      await member.guild.ban(member, reason='[Automatic] Suspected bot or automated account.')
-      
+    #if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
+    #   member.name.islower() and \
+    #   len(member.name) < 5 and \
+    #   member.name == member.display_name and \
+    #   member.avatar == None and \
+    #   len(member.roles) <= 1:
+    #   
+    #  channel_test = member.guild.system_channel
+    #  
+    #  if (not channel_test):
+    #    channel_test = self.get_channel(470890531061366787)
+    #   
+    #  # swy: send a message to the #off-topic channel
+    #  await channel_test.send('Preemptively banned {0.mention}, probably some automated account. 🔨'.format(member))
+    #  await member.guild.ban(member, reason='[Automatic] Suspected bot or automated account.')
+
+  async def on_member_update(self, before: discord.Member, after: discord.Member):
+    if after.name == "Swyter Test" and not after.pending and before.pending != after.pending:
+      print('User', after)
+
+      unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
+
+      channel_unve = self.get_channel(1090711662320955563) # Swyter test -- #general
+
+      if unverified_role:
+        await after.add_roles(unverified_role)
+        mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
+        await mes.delete(delay=2)
+
   async def on_message_delete(self, message):
     print('Deleted message:', pprint(message), message.content, time.strftime("%Y-%m-%d %H:%M"))
 
@@ -290,7 +303,7 @@ class TldDiscordClient(discord.Client):
 
 
 intents = discord.Intents.default()
-
+intents.members = True
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient(intents=intents)
 loop = asyncio.get_event_loop()
