@@ -140,13 +140,18 @@ class TldDiscordClient(discord.Client):
                   #select.disabled=True
                   #await interaction.response.edit_message(view=self)
                   await interaction.response.send_message(f"Darn, try again!", ephemeral=True)
+                  channel_log = interaction.user.guild.get_channel(1090685607635865710)
+                  await channel_log.send(f"{interaction.user.mention} has failed validation by responding {select.values}.")
                   return
 
-                await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!", ephemeral=True)
+                await interaction.response.send_message(f"Awesome! I like {select.values[0]} too!\nNow you are in. Head over to {interaction.guild.rules_channel.mention}.", ephemeral=True)
                 unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
 
                 if unverified_role:
                   await interaction.user.remove_roles(unverified_role)
+
+                channel_log = interaction.user.guild.get_channel(1090685607635865710)
+                await channel_log.send(f"{interaction.user.mention} has passed validation by responding {rand_answers_good}.")
 
           quest = TLDVerifyQuiz()
           await interaction.response.send_message("Respond to the following question:", view=quest, ephemeral=True)
@@ -230,6 +235,8 @@ class TldDiscordClient(discord.Client):
 
   async def on_member_join(self, member):
     print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
+    channel_log = self.get_channel(1090685607635865710)
+    await channel_log.send(f"{member.mention} has joined.")
 
     #if (member.name in ['cpt', 'cp', 'sgt', 'tp'] or not any(x in member.name for x in 'aeiou')) and \
     #   member.name.islower() and \
@@ -257,6 +264,8 @@ class TldDiscordClient(discord.Client):
 
       if unverified_role:
         await after.add_roles(unverified_role)
+        channel_log = self.get_channel(1090685607635865710)
+        await channel_log.send(f"{after.mention} has passed the Rules Screening check. Quarantining and adding Unverified role.")
         mes = await channel_unve.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
         await mes.delete(delay=2)
 
