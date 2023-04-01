@@ -78,9 +78,9 @@ import random
 
 # swy: the final question will have three good and three bad answers, so have some extras of each to mix them up
 questions = [
-  {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits"],  'answers_bad': ["Harad", "Mordor", "Isengard", "Umbar"]   },
-  {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Faramir", "Bilbo", "Galadriel", "Gollum"]},
-  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Trolls", "Orcs", "Dragons", "Dwarves"], 'answers_bad': ["Centaurs", "Undead", "Lizards", "Gnomes"]   },
+  {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits" ], 'answers_bad': ["Harad", "Mordor", "Isengard", "Umbar"   ] },
+  {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Faramir", "Bilbo", "Galadriel", "Gollum"] },
+  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Trolls", "Orcs", "Dragons", "Dwarves"], 'answers_bad': ["Centaurs", "Tauren", "Lizards", "Gnomes"] },
 ]
 
 class TldDiscordValidator(discord.ext.commands.Cog):
@@ -128,7 +128,7 @@ class TldDiscordValidator(discord.ext.commands.Cog):
                 super().__init__(timeout=30)
                 self.rand_answers_good = rand_answers_good
 
-              @discord.ui.select(placeholder=question_text, min_values = 3, max_values = 3, options = ans_options)
+              @discord.ui.select(placeholder=question_text, min_values=3, max_values=3, options=ans_options)
               async def select_menu(self, interaction: discord.Interaction, select: discord.ui.Select):
                 print("click")
 
