@@ -2,7 +2,7 @@
 import os
 import sys
 import asyncio
-import discord, discord.ext.commands
+import discord, discord.ext.commands, discord.ext.tasks
 import traceback
 import datetime, time, signal
 
@@ -95,6 +95,8 @@ class TldDiscordValidator(discord.ext.commands.Cog):
     self.channel_test = self.bot.get_channel( 470890531061366787) # Swyter test -- #general
     self.channel_door = self.bot.get_channel(1090711662320955563) # The Last Days -- #doors-of-durin
 
+    self.kick_stuck_members.start()
+
     # swy: there's a permanent message with a button (TldVerifyPresentation), when clicking it we
     #      create a random quiz (TldVerifyQuiz) that only the clicker can see
     class TldVerifyPresentation(discord.ui.View):
@@ -175,7 +177,21 @@ class TldDiscordValidator(discord.ext.commands.Cog):
         mes = await self.channel_door.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
         await mes.delete(delay=2) # swy: phantom ping
 
+  @discord.ext.tasks.loop(seconds=30)
+  async def kick_stuck_members(self):
+    guild = self.channel_door.guild
+    unverified_role = discord.utils.get(guild.roles, name="Unverified")
+    
+    for member in unverified_role.members:
+      # swy: ignore users (with more roles than just this and @everyone) that may have this role for testing or to mess around
+      if len(member.roles) > 2:
+        continue
 
+      then = member.joined_at; now = datetime.datetime.now(datetime.timezone.utc)
+
+      if (now - then) > datetime.timedelta(minutes=10):
+        await client.log_to_channel(member, f"is getting **kicked** for being on quarantine for too long.")
+        await member.kick(reason='bot: waited too long before passing the test')
 
 # swy: implement our bot thingie; discord.ext.commands.Bot is a higher level derivative of discord.Client we used until very recently
 class TldDiscordClient(discord.ext.commands.Bot):
