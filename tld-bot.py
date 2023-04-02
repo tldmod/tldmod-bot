@@ -106,6 +106,7 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
         @discord.ui.button(label="Verify my account", style=discord.ButtonStyle.blurple, custom_id='tld:verify')
         async def blurple_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+          await client.log_to_channel(interaction.user, f" has clicked on the verify button.")
 
           # swy: select one question from the lot
           rand_quest = random.choice(questions)
@@ -162,23 +163,15 @@ class TldDiscordValidator(discord.ext.commands.Cog):
   @discord.ext.commands.Cog.listener()
   async def on_member_join(self, member : discord.Member):
     print('User joined: ', pprint(member), time.strftime("%Y-%m-%d %H:%M"))
-    await client.log_to_channel(member, f" has **joined**. Account created at {member.created_at}.")
+    await client.log_to_channel(member, f" has **joined**. Account created at {member.created_at}. Quarantining and adding *Unverified* role.")
 
-  @discord.ext.commands.Cog.listener()
-  async def on_member_update(self, before: discord.Member, after: discord.Member):
-    if after.bot:
-        return
+    unverified_role = discord.utils.get(member.guild.roles, name="Unverified")
 
-    if not after.pending and before.pending != after.pending:
-      print('User', after)
-
-      unverified_role = discord.utils.get(after.guild.roles, name="Unverified")
-
-      if unverified_role:
-        await after.add_roles(unverified_role)
-        await client.log_to_channel(after, f"has **passed** the **Rules Screening** check. Quarantining and adding *Unverified* role.")
-        mes = await self.channel_door.send(f"{after.mention}") # swy: ping them to make the hidden channel pop up more
-        await mes.delete(delay=2) # swy: phantom ping
+    if unverified_role:
+      await member.add_roles(unverified_role)
+      await client.log_to_channel(member, f"")
+      mes = await self.channel_door.send(f"{member.mention}") # swy: ping them to make the hidden channel pop up more
+      await mes.delete(delay=2) # swy: phantom ping
 
   @discord.ext.tasks.loop(seconds=30)
   async def kick_stuck_members(self):
