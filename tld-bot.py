@@ -166,6 +166,9 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
   @discord.ext.commands.Cog.listener()
   async def on_member_update(self, before: discord.Member, after: discord.Member):
+    if after.bot:
+        return
+
     if not after.pending and before.pending != after.pending:
       print('User', after)
 
