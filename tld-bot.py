@@ -169,7 +169,6 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
     if unverified_role:
       await member.add_roles(unverified_role)
-      await client.log_to_channel(member, f"")
       mes = await self.channel_door.send(f"{member.mention}") # swy: ping them to make the hidden channel pop up more
       await mes.delete(delay=2) # swy: phantom ping
 
