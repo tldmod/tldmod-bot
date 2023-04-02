@@ -150,6 +150,12 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
                 await client.log_to_channel(interaction.user, f"has **passed** validation by responding {rand_answers_good}.")
 
+                # swy: add a distinctive «badge» in the join log message to distinguish it from the people that get kicked out
+                async for message in interaction.guild.system_channel.history(limit=30):
+                  if message.is_system() and message.type == discord.MessageType.new_member and message.author == interaction.user:
+                    await message.add_reaction('💯')
+                    break
+
           await interaction.response.send_message("Respond to the following question:", view=TldVerifyQuiz(), ephemeral=True)
 
     # swy: make the first post's buttons persistent across bot reboots
