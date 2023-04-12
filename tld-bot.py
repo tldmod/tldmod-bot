@@ -78,9 +78,9 @@ import random
 
 # swy: the final question will have three good and three bad answers, so have some extras of each to mix them up
 questions = [
-  {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits" ], 'answers_bad': ["Harad", "Mordor", "Isengard", "Umbar"   ] },
-  {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Faramir", "Bilbo", "Galadriel", "Gollum"] },
-  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Trolls", "Orcs", "Dragons", "Dwarves"], 'answers_bad': ["Centaurs", "Tauren", "Lizards", "Gnomes"] },
+  {'question': 'Which of these factions are good?',                'answers_good': ["Gondor", "Rohan", "Elves", "Hobbits" ], 'answers_bad': ["Harad", "Mordor", "Isengard", "Khand", "Umbar"      ] },
+  {'question': 'Which of these are part of the Fellowship?',       'answers_good': ["Frodo", "Aragorn", "Gimli", "Gandalf"], 'answers_bad': ["Sauron", "Gríma", "Saruman", "Galadriel", "Gollum"  ] },
+  {'question': 'Which races are part of the Tolkien legendarium?', 'answers_good': ["Trolls", "Orcs", "Dragons", "Dwarves"], 'answers_bad': ["Centaurs", "Tauren", "Lizards", "Gnomes", "Kobolds" ] },
 ]
 
 class TldDiscordValidator(discord.ext.commands.Cog):
