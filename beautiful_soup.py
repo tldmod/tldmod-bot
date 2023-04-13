@@ -35,15 +35,21 @@ def check_workshop_update(base_date):
   # swy: retrieve the main page from the changelog, grab another random Workshop page at the same time
   #      to ensure it's not a general going-offline thing for the whole platform.
   #      ignore that, we're looking for our own mod's problems.
+  lai_soup = retrieve_page_contents('https://steamcommunity.com/sharedfiles/filedetails/changelog/495626082?l=english')
   tld_soup = retrieve_page_contents('https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223?l=english')
   swc_soup = retrieve_page_contents('https://steamcommunity.com/sharedfiles/filedetails/changelog/742671195?l=english')
 
   # swy: exit early if we couldn't retrieve the mod's changelog page
-  if not tld_soup or not swc_soup:
+  if not lai_soup or not tld_soup or not swc_soup:
     return False
 
+  lai_title_text = get_page_title(lai_soup)
   tld_title_text = get_page_title(tld_soup)
   swc_title_text = get_page_title(swc_soup)
+
+  if lai_title_text == '' or tld_title_text == '' or swc_title_text == '':
+    print("[!] the Steam Workshop pages don't respond, Valve messed up. Network error. Ignoring.")
+    return False
 
   # swy: seems like Valve doesn't want to respect HTTP error codes, even on errors it throws 200 pages
   #      take advantage of the title: "Steam Community :: Error", and maybe the body:
@@ -51,7 +57,7 @@ def check_workshop_update(base_date):
   #                       > That item does not exist. It may have been removed by the author.
   if 'error' in tld_title_text.lower():
     # swy: generalized error? then just bail out
-    if 'error' in swc_title_text.lower():
+    if 'error' in swc_title_text.lower() or 'error' in lai_title_text.lower():
       print("[!] generalized downtime in the Steam Workshop platform, Valve messed up. Ignoring.")
       return False
     else:
