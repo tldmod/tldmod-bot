@@ -336,12 +336,13 @@ intents.members = True # swy: we need this to be able to see the joins and chang
 client = TldDiscordClient(intents=intents, command_prefix=None)
 loop = asyncio.get_event_loop()
 
-def handle_exit():
+def handle_exit(*args):
     raise KeyboardInterrupt
 
 if os.name != 'nt':
   loop.add_signal_handler(signal.SIGTERM, handle_exit, signal.SIGTERM)
   loop.add_signal_handler(signal.SIGABRT, handle_exit, signal.SIGABRT, None)
+  loop.add_signal_handler(signal.SIGINT,  handle_exit, signal.SIGINT) # swy: catch Ctrl-C, just in case: https://stackoverflow.com/a/1112350/674685
 
 while True:
   try:
@@ -357,4 +358,4 @@ while True:
     print("[i] ctrl-c detected")
     loop.run_until_complete(client.close())
     print("[-] exiting...")
-    sys.exit(0)
+    sys.exit(130) # swy: means Bash's 128 + 2 (SIGINT) i.e. exiting gracefully

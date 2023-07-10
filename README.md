@@ -23,7 +23,8 @@ export TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET='545jsgsgiojiogfjagklsklasdfklfklñ5g
 export MASTODON_ACCOUNT_ACCESS_TOKEN='k-76kLl3nnjeeeuckj6sdFGñl9k8k7k65h3hb44k7dd'
 export MASTODON_ACCOUNT_ACCESS_URL='botsin.space'
 
-python -u tld-bot.py 2>&1 | tee -a discord.out
+python -u tld-bot.py 2>&1 | tee --ignore-interrupts --append discord.out # swy: without the tee «-i» parameter the Ctrl-C python handler won't work while saving the output with «tee»
+exit $PIPESTATUS                                                         # swy: $? won't work to retrieve the exit code under «tee»: https://stackoverflow.com/a/1221870/674685
 ```
 
 You can use something like `tmux` to daemonize it in your server. Good luck.
