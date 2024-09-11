@@ -222,8 +222,9 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
       self.rss_feeds_last_published_update = {}
       self.rss_base_date = (datetime.datetime.now()).timetuple() # swy: test it with (datetime.datetime.now() - relativedelta(months=2))
 
-      for feed in self.rss_feeds:
-        self.rss_feeds_last_published_update[feed] = self.rss_base_date
+      for rss_feed_url in self.rss_feeds:
+        self.rss_feeds_last_published_update[rss_feed_url] = self.rss_base_date
+        print(f"[i] feed exists: {rss_feed_url}")
 
       print('[i] RSS poster plug-in ready')
 
@@ -235,9 +236,7 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
         
         if not cur_feed:
           continue
-        
-        print(f"[i] feed exists: {rss_feed_url}")
-        
+
         # swy: loop for every update, from oldest to newest
         for entry in reversed(cur_feed.entries):
           # swy: if this RSS entry is more recent than the last one we published, publish it.
@@ -246,8 +245,7 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
             mastodon_send_toot(
               f'''{entry.title} {entry.link}'''
             )
-            #print(f"[i] new rss entry published: {entry.title} {entry.link} lastdate={rss_feeds_last_published_update[rss_feed_url]} newdate={entry.updated_parsed}")
-            print(f"   - new rss entry published: {entry.title} {entry.link} {entry.updated_parsed > self.rss_feeds_last_published_update[rss_feed_url]}")
+            print(f"[i] new RSS entry published: {entry.title} {entry.link} {entry.updated_parsed} {self.rss_feeds_last_published_update[rss_feed_url]}")
             self.rss_feeds_last_published_update[rss_feed_url] = entry.updated_parsed
 
 # swy: implement our bot thingie; discord.ext.commands.Bot is a higher level derivative of discord.Client we used until very recently
