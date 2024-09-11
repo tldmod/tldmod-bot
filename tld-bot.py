@@ -194,6 +194,62 @@ class TldDiscordValidator(discord.ext.commands.Cog):
         await client.log_to_channel(member, f"is getting **kicked** for being on quarantine for too long.")
         await member.kick(reason='bot: waited too long before passing the test')
 
+
+# swy: use this to be able to read RSS or Atom feeds
+#      make the feedparser dependency optional
+def get_rss_feed(rss_feed_url):
+    try:
+        import feedparser
+        return feedparser.parse(rss_feed_url)
+    except:
+        print('  [e] cannot parse this `pip install feedparser`; skipping.')
+        return
+
+from dateutil.relativedelta import relativedelta
+class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
+    def __init__(self, bot):
+      self.bot = bot
+
+      # swy: bridge RSS feeds ourselves by posting new stuff to Twitter/Mastodon now that dlvr.it no longer has a free plan
+      self.rss_feeds = [
+        'http://rss.moddb.com/mods/the-last-days/downloads/feed/rss.xml', # MODDB // Files RSS feed - The Last Days
+        'http://rss.moddb.com/mods/the-last-days/reviews/feed/rss.xml',   # MODDB // Review RSS feed - The Last Days
+      # 'http://rss.moddb.com/mods/the-last-days/videos/feed/rss.xml',    # MODDB // Videos & Audio RSS feed - The Last Days
+        'https://github.com/tldmod/tldmod/commits/master.atom',           # Recent Commits to tldmod - master
+      ]
+
+      # swy: assume we've published any posts dated before this point in time, we don't have a persistent database
+      self.rss_feeds_last_published_update = {}
+      self.rss_base_date = (datetime.datetime.now()).timetuple() # swy: test it with (datetime.datetime.now() - relativedelta(months=2))
+
+      for feed in self.rss_feeds:
+        self.rss_feeds_last_published_update[feed] = self.rss_base_date
+
+      print('[i] RSS poster plug-in ready')
+
+    @discord.ext.tasks.loop(minutes=2)
+    async def update_rss_feed_in_the_background(self, *args):
+      # swy: loop for every RSS feed in the list
+      for rss_feed_url in self.rss_feeds:
+        cur_feed = get_rss_feed(rss_feed_url)
+        
+        if not cur_feed:
+          continue
+        
+        print(f"[i] feed exists: {rss_feed_url}")
+        
+        # swy: loop for every update, from oldest to newest
+        for entry in reversed(cur_feed.entries):
+          # swy: if this RSS entry is more recent than the last one we published, publish it.
+          #      mark it as the new baseline for that specific RSS feed in this session, so we don't post it twice
+          if entry.updated_parsed > self.rss_feeds_last_published_update[rss_feed_url]:
+            mastodon_send_toot(
+              f'''{entry.title} {entry.link}'''
+            )
+            #print(f"[i] new rss entry published: {entry.title} {entry.link} lastdate={rss_feeds_last_published_update[rss_feed_url]} newdate={entry.updated_parsed}")
+            print(f"   - new rss entry published: {entry.title} {entry.link} {entry.updated_parsed > self.rss_feeds_last_published_update[rss_feed_url]}")
+            self.rss_feeds_last_published_update[rss_feed_url] = entry.updated_parsed
+
 # swy: implement our bot thingie; discord.ext.commands.Bot is a higher level derivative of discord.Client we used until very recently
 class TldDiscordClient(discord.ext.commands.Bot):
   def __init__(self, *args, **kwargs):
@@ -205,6 +261,8 @@ class TldDiscordClient(discord.ext.commands.Bot):
 
     # swy: enable the member verification plug-in
     await self.add_cog(TldDiscordValidator(self, self.log_to_channel))
+    # swy: enable the RSS update microblogging poster
+    await self.add_cog(TldDiscordValidator(self))
 
   async def on_ready(self):
     print('Logged in as')
