@@ -205,7 +205,7 @@ def get_rss_feed(rss_feed_url):
         print('  [e] cannot parse this `pip install feedparser`; skipping.')
         return
 
-from dateutil.relativedelta import relativedelta
+#from dateutil.relativedelta import relativedelta
 class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
     def __init__(self, bot):
       self.bot = bot
@@ -262,7 +262,7 @@ class TldDiscordClient(discord.ext.commands.Bot):
     # swy: enable the member verification plug-in
     await self.add_cog(TldDiscordValidator(self, self.log_to_channel))
     # swy: enable the RSS update microblogging poster
-    await self.add_cog(TldDiscordValidator(self))
+    await self.add_cog(TldRssMastodonAndTwitterPoster(self))
 
   async def on_ready(self):
     print('Logged in as')
