@@ -34,7 +34,7 @@ if not 'DISCORD_TOKEN' in os.environ:
 #
 #      By default Twitter only gives you "Essential" access, so you can't use the older 1.1 API that all the Internet talks about, (i.e. no `api = tweepy.API(auth); api.update_status(text)`)
 #      to send tweets you need to use the 2.0 API, which for tweepy means using the `tweepy.Client,` functions. Easy peasy. :(
-def twitter_send_tweet(text):
+def twitter_send_tweet(text, show_preview=True):
     try:
         import tweepy
     except:
@@ -50,13 +50,13 @@ def twitter_send_tweet(text):
             consumer_key = os.environ['TWITTER_API_KEY'],                  consumer_secret = os.environ['TWITTER_API_SECRET'],
             access_token = os.environ['TWITTER_ACCOUNT_ACCESS_TOKEN'], access_token_secret = os.environ['TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET']
         )
-        client.create_tweet(text=text)
+        client.create_tweet(text=text, card_uri=(show_preview and None or 'tombstone://card')) # swy: https://stackoverflow.com/questions/65550090/how-to-prevent-automatic-link-preview-generation-for-status-update-in-twitter-ap
     except Exception as e:
         print('  [!] exception while sending tweet. Ignoring:', e)
 
-def mastodon_send_toot(text):
+def mastodon_send_toot(text, show_preview=True):
     # swy: keep twitter as fallback, for now
-    twitter_send_tweet(text)
+    twitter_send_tweet(text, show_preview)
     # swy: much easier than interfacing with the Twitter API, to get the token for other accounts we'd need to use OAuth
     #      but as we only want to post on the account that owns the bots we get the token directly, as long as we have the write:status permission
     try:
@@ -246,7 +246,7 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
           #      mark it as the new baseline for that specific RSS feed in this session, so we don't post it twice
           if entry.updated_parsed > self.rss_feeds_last_published_update[rss_feed_url]:
             mastodon_send_toot(
-              f'''{entry.title} {entry.link}'''
+              f'''{entry.title} {entry.link}''', False # swy: don't show previews where possible (Twitter)
             )
             print(f"[i] new RSS entry published: {entry.title} {entry.link} {entry.updated_parsed} {self.rss_feeds_last_published_update[rss_feed_url]}")
             self.rss_feeds_last_published_update[rss_feed_url] = entry.updated_parsed
