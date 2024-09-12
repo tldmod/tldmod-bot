@@ -205,7 +205,6 @@ def get_rss_feed(rss_feed_url):
         print('  [e] cannot parse this `pip install feedparser`; skipping.')
         return
 
-#from dateutil.relativedelta import relativedelta
 class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
     def __init__(self, bot):
       self.bot = bot
@@ -220,13 +219,17 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
 
       # swy: assume we've published any posts dated before this point in time, we don't have a persistent database
       self.rss_feeds_last_published_update = {}
-      self.rss_base_date = (datetime.datetime.now()).timetuple() # swy: test it with (datetime.datetime.now() - relativedelta(months=2))
+      self.rss_base_date = (datetime.datetime.now(datetime.timezone.utc)).timetuple() # swy: test it with (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=50))
 
       for rss_feed_url in self.rss_feeds:
         self.rss_feeds_last_published_update[rss_feed_url] = self.rss_base_date
         print(f"[i] feed exists: {rss_feed_url}")
 
       print('[i] RSS poster plug-in ready')
+      
+    @discord.ext.commands.Cog.listener()
+    async def on_ready(self):
+      self.update_rss_feed_in_the_background.start()
 
     @discord.ext.tasks.loop(minutes=2)
     async def update_rss_feed_in_the_background(self, *args):
