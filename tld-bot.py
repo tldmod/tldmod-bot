@@ -50,7 +50,7 @@ def twitter_send_tweet(text, show_preview=True):
             consumer_key = os.environ['TWITTER_API_KEY'],                  consumer_secret = os.environ['TWITTER_API_SECRET'],
             access_token = os.environ['TWITTER_ACCOUNT_ACCESS_TOKEN'], access_token_secret = os.environ['TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET']
         )
-        client.create_tweet(text=text, card_uri=(show_preview and None or 'tombstone://card')) # swy: https://stackoverflow.com/questions/65550090/how-to-prevent-automatic-link-preview-generation-for-status-update-in-twitter-ap
+        client.create_tweet(text=text) # swy: card_uri is only supported in the 1.1 api, removed in 2.0, we can't use this: , card_uri=(show_preview and None or 'tombstone://card')) # swy: https://stackoverflow.com/questions/65550090/how-to-prevent-automatic-link-preview-generation-for-status-update-in-twitter-ap
     except Exception as e:
         print('  [!] exception while sending tweet. Ignoring:', e)
 
