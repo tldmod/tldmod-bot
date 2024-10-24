@@ -194,6 +194,9 @@ class TldDiscordValidator(discord.ext.commands.Cog):
         await client.log_to_channel(member, f"is getting **kicked** for being on quarantine for too long.")
         await member.kick(reason='bot: waited too long before passing the test')
 
+  def cog_unload(self):
+    self.kick_stuck_members.cancel()
+
 
 # swy: use this to be able to read RSS or Atom feeds
 #      make the feedparser dependency optional
@@ -202,7 +205,7 @@ def get_rss_feed(rss_feed_url):
         import feedparser
         return feedparser.parse(rss_feed_url)
     except:
-        print('  [e] cannot parse this `pip install feedparser`; skipping.')
+        print('  [e] cannot parse this, make sure you `pip install feedparser`; skipping.')
         return
 
 class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
@@ -270,6 +273,7 @@ class TldDiscordClient(discord.ext.commands.Bot):
     print(self.user.name)
     print(self.user.id)
     print('------')
+    await self.change_presence(activity=discord.CustomActivity(name='Pondering the orb.'))
 
   async def log_to_channel(self, user: discord.Member, text):
     channel_log = user.guild.get_channel(1090685607635865710)
