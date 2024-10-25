@@ -88,14 +88,16 @@ class TldDiscordValidator(discord.ext.commands.Cog):
     self.bot = bot
     self.log_to_channel = log_to_channel
 
-    print('[i] doors-of-durin validator plug-in ready')
+    self.kick_stuck_members.start()
+
+    print('[i] Doors of Durin validator plug-in ready')
 
   @discord.ext.commands.Cog.listener()
   async def on_ready(self):
-    self.channel_test = self.bot.get_channel( 470890531061366787) # Swyter test -- #general
+    self.channel_test = self.bot.get_channel( 470890531061366787) #   Swyter test -- #general
     self.channel_door = self.bot.get_channel(1090711662320955563) # The Last Days -- #doors-of-durin
 
-    self.kick_stuck_members.start()
+    
 
     # swy: there's a permanent message with a button (TldVerifyPresentation), when clicking it we
     #      create a random quiz (TldVerifyQuiz) that only the clicker can see
@@ -193,6 +195,10 @@ class TldDiscordValidator(discord.ext.commands.Cog):
       if (now - then) > datetime.timedelta(minutes=10):
         await client.log_to_channel(member, f"is getting **kicked** for being on quarantine for too long.")
         await member.kick(reason='bot: waited too long before passing the test')
+
+  @kick_stuck_members.before_loop
+  async def kick_stuck_members_before_task_launch(self):
+    await self.bot.wait_until_ready()
 
   def cog_unload(self):
     self.kick_stuck_members.cancel()
