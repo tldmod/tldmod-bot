@@ -4,7 +4,7 @@ import sys
 import asyncio
 import discord, discord.ext.commands, discord.ext.tasks
 import traceback
-import datetime, time, signal
+import datetime, time, signal, json
 
 from pprint import pprint
 from aiohttp import connector
@@ -231,31 +231,45 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
         'https://github.com/tldmod/tldmod/commits/master.atom',           # Recent Commits to tldmod - master
       ]
 
+      self.rss_last_posted_json_filename = 'tld-bot-rss-last-posted.json'
+
       # swy: assume we've published any posts dated before this point in time, we don't have a persistent database
       self.rss_feeds_last_published_update = {}
-      self.rss_base_date = (datetime.datetime.now(datetime.timezone.utc)).timetuple() # swy: test it with (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=50))
+      self.rss_base_date = (datetime.datetime.now(datetime.timezone.utc)).timetuple() # swy: test it with (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=50)).timetuple()
 
-      for rss_feed_url in self.rss_feeds:
-        self.rss_feeds_last_published_update[rss_feed_url] = self.rss_base_date
-        print(f"[i] feed exists: {rss_feed_url}")
-
+      try: # swy: load the dates where each RSS feed last posted an entry from a previous run, if any
+        with open(self.rss_last_posted_json_filename, 'r') as f:
+          self.rss_feeds_last_published_update = json.loads(f.read())
+          print("gogogo", self.rss_feeds_last_published_update)
+      except:
+        pass
+      
+      for rss_feed_url in self.rss_feeds: # swy: if the returned JSON data exists for this entry/JSON key, then convert the list into an actual time structure that can be compared against, if not used the default base date.
+        self.rss_feeds_last_published_update[rss_feed_url] = (rss_feed_url in self.rss_feeds_last_published_update)                and \
+                                                               time.struct_time(self.rss_feeds_last_published_update[rss_feed_url]) or \
+                                                               self.rss_base_date
+        print(f"[i] feed exists: {rss_feed_url:40} | last checked: { time.strftime("%Y-%m-%d %H:%M", self.rss_feeds_last_published_update[rss_feed_url]) }")
+      
+      self.task = self.update_rss_feed_in_the_background.start()
       print('[i] RSS poster plug-in ready')
       
-    @discord.ext.commands.Cog.listener()
-    async def on_ready(self):
-      self.update_rss_feed_in_the_background.start()
+    #@discord.ext.commands.Cog.listener()
+    #async def on_ready(self):
+      #self.task =  self.update_rss_feed_in_the_background.add_exception_type(Exception)
+      #self.task =  self.update_rss_feed_in_the_background.start()
 
-    @discord.ext.tasks.loop(minutes=2)
+    @discord.ext.tasks.loop(minutes=2, reconnect=False)
     async def update_rss_feed_in_the_background(self, *args):
       # swy: loop for every RSS feed in the list
       for rss_feed_url in self.rss_feeds:
         cur_feed = get_rss_feed(rss_feed_url)
-        
+        print("one", rss_feed_url)
         if not cur_feed:
           continue
-
+        print("two", rss_feed_url, len(cur_feed.entries))
         # swy: loop for every update, from oldest to newest
-        for entry in reversed(cur_feed.entries):
+        for i, entry in enumerate(reversed(cur_feed.entries)):
+          print(i, len(cur_feed.entries)) #, entry.updated_parsed > self.rss_feeds_last_published_update[rss_feed_url])
           # swy: if this RSS entry is more recent than the last one we published, publish it.
           #      mark it as the new baseline for that specific RSS feed in this session, so we don't post it twice
           if entry.updated_parsed > self.rss_feeds_last_published_update[rss_feed_url]:
@@ -264,6 +278,20 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
             )
             print(f"[i] new RSS entry published: {entry.title} {entry.link} {entry.updated_parsed} {self.rss_feeds_last_published_update[rss_feed_url]}")
             self.rss_feeds_last_published_update[rss_feed_url] = entry.updated_parsed
+        
+            # swy: save it persistently
+            with open(self.rss_last_posted_json_filename, 'w') as f:
+              f.write(json.dumps(self.rss_feeds_last_published_update, indent=4, sort_keys=True, default=str)) # swy: https://stackoverflow.com/a/36142844/674685
+              
+    @update_rss_feed_in_the_background.before_loop
+    async def update_rss_feed_in_the_background_before_launch(self):
+      await self.bot.wait_until_ready()
+      print('asdfddd!')
+
+    @update_rss_feed_in_the_background.after_loop
+    async def after_slow_count(self):
+      print('done!', self.task, self.update_rss_feed_in_the_background.is_running())
+
 
 # swy: implement our bot thingie; discord.ext.commands.Bot is a higher level derivative of discord.Client we used until very recently
 class TldDiscordClient(discord.ext.commands.Bot):
