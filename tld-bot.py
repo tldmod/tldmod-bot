@@ -149,9 +149,11 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 
                 # swy: unquarantine the user by getting rid of this role
                 unverified_role = discord.utils.get(interaction.guild.roles, name="Unverified")
+                memberpass_role = discord.utils.get(interaction.guild.roles, name="Member")
 
                 if unverified_role:
                   await interaction.user.remove_roles(unverified_role)
+                  await interaction.user.add_roles(memberpass_role)
 
                 await client.log_to_channel(interaction.user, f"has **passed** validation by responding {rand_answers_good}.")
 
