@@ -15,10 +15,15 @@ from beautiful_soup import check_workshop_update
 import logging
 
 logger = logging.getLogger('discord')
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(ch)
 
 # swy: exit if we don't have a valid bot token
 if not 'DISCORD_TOKEN' in os.environ:
@@ -300,6 +305,9 @@ class TldDiscordClient(discord.ext.commands.Bot):
     if channel_log:
       await channel_log.send(f"{user.mention} `{user.name}#{user.discriminator} ({user.id})` {text}")
 
+  async def connect(self, *, reconnect: bool = True) -> None:
+    print("connect")
+    return await super().connect(reconnect=reconnect)
   async def on_message(self, message):
     channel_buil = self.get_channel(492923251329204224) # TLD discord -- #nightly-builds
     
@@ -418,15 +426,15 @@ intents.members = True # swy: we need this to be able to see the joins and chang
 # swy: launch our bot thingie, allow for Ctrl + C
 client = TldDiscordClient(intents=intents, command_prefix=None)
 
-while True:
-  try:
+try:
+  while True:
     asyncio.run(client.start(os.environ["DISCORD_TOKEN"]))
-    
-  except connector.ClientConnectorError:
-    traceback.print_exc()
-    pass
-  except KeyboardInterrupt:
-    print("[i] ctrl-c detected")
-    sys.exit(130) # swy: means Bash's 128 + 2 (SIGINT) i.e. exiting gracefully
-  finally:
-    asyncio.run(client.close()) # swy: make sure the bot disappears from the member list immediately
+
+except connector.ClientConnectorError:
+  traceback.print_exc()
+  pass
+except KeyboardInterrupt:
+  print("[i] ctrl-c detected")
+  sys.exit(130) # swy: means Bash's 128 + 2 (SIGINT) i.e. exiting gracefully
+finally:
+  asyncio.run(client.close()) # swy: make sure the bot disappears from the member list immediately
