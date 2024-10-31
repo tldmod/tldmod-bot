@@ -76,7 +76,7 @@ def mastodon_send_toot(text, show_preview=True):
         return
 
     try:
-      requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
+      requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text, 'visibility': 'unlisted', 'language': 'en'}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
     except Exception as e:
         print('  [!] exception while sending toot. Ignoring:', e)
         pass
