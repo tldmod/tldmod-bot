@@ -9,14 +9,14 @@ def retrieve_page_contents(url):
   try:
     res = requests.get(url)
   except requests.exceptions.RequestException as e:
-    print("[e] page error: ", e)
+    print("[e] scrapper page error: ", e)
     return False
   # swy: python exceptions are a big pain, handle them correctly instead of blocking the scrapper: https://stackoverflow.com/a/24700390/674685
   except requests.exceptions.ConnectionError as e:
-    print("[e] connection error: ", e)
+    print("[e] scrapper connection error: ", e)
     return False
   except Exception as e:
-    print("[e] misc request error: ", e)
+    print("[e] scrapper misc request error: ", e)
     return False
 
   soup = bs4.BeautifulSoup(res.text, features='html5lib')
@@ -41,6 +41,8 @@ def check_workshop_update(base_date):
 
   # swy: exit early if we couldn't retrieve the mod's changelog page
   if not lai_soup or not tld_soup or not swc_soup:
+    print("[!] the Steam Workshop pages don't respond, Valve messed up. Network error. Ignoring.")
+    time.sleep(60)
     return False
 
   lai_title_text = get_page_title(lai_soup)
@@ -49,6 +51,7 @@ def check_workshop_update(base_date):
 
   if lai_title_text == '' or tld_title_text == '' or swc_title_text == '':
     print("[!] the Steam Workshop pages don't respond, Valve messed up. Network error. Ignoring.")
+    time.sleep(60)
     return False
 
   # swy: seems like Valve doesn't want to respect HTTP error codes, even on errors it throws 200 pages

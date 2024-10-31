@@ -58,6 +58,7 @@ def twitter_send_tweet(text, show_preview=True):
         client.create_tweet(text=text) # swy: card_uri is only supported in the 1.1 api, removed in 2.0, we can't use this: , card_uri=(show_preview and None or 'tombstone://card')) # swy: https://stackoverflow.com/questions/65550090/how-to-prevent-automatic-link-preview-generation-for-status-update-in-twitter-ap
     except Exception as e:
         print('  [!] exception while sending tweet. Ignoring:', e)
+        pass
 
 def mastodon_send_toot(text, show_preview=True):
     # swy: keep twitter as fallback, for now
@@ -78,6 +79,7 @@ def mastodon_send_toot(text, show_preview=True):
       requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
     except Exception as e:
         print('  [!] exception while sending toot. Ignoring:', e)
+        pass
 
 import random
 
@@ -217,7 +219,7 @@ def get_rss_feed(rss_feed_url):
         return feedparser.parse(rss_feed_url)
     except:
         print('  [e] cannot parse this, make sure you `pip install feedparser`; skipping.')
-        return
+        pass
 
 class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
     def __init__(self, bot):
@@ -445,12 +447,11 @@ client = TldDiscordClient(intents=intents, command_prefix=None)
 try:
   while True:
     asyncio.run(client.start(os.environ["DISCORD_TOKEN"]))
-
-except connector.ClientConnectorError:
-  traceback.print_exc()
-  pass
 except KeyboardInterrupt:
   print("[i] ctrl-c detected")
-  sys.exit(130) # swy: means Bash's 128 + 2 (SIGINT) i.e. exiting gracefully
-finally:
   asyncio.run(client.close()) # swy: make sure the bot disappears from the member list immediately
+  sys.exit(130) # swy: means Bash's 128 + 2 (SIGINT) i.e. exiting gracefully
+except Exception as e:
+  print('  [!] loop error. Ignoring:', e)
+  traceback.print_exc()
+  pass
