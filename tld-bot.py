@@ -12,7 +12,7 @@ from aiohttp import connector
 from beautiful_soup import check_workshop_update
 
 # swy: ugly discord.log file boilerplate
-import logging
+import logging, io
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -216,7 +216,13 @@ class TldDiscordValidator(discord.ext.commands.Cog):
 def get_rss_feed(rss_feed_url):
     try:
         import feedparser
-        return feedparser.parse(rss_feed_url)
+        # swy: retrieve the URL data ourselves with an actual timeout to avoid the obnoxious
+        #      "Shard ID None heartbeat blocked for more than 280 seconds" errors: https://stackoverflow.com/a/39330232/674685
+        import requests
+        resp = requests.get(rss_feed_url, timeout=5)
+        content = io.BytesIO(resp.content)
+        # --
+        return feedparser.parse(content)
     except:
         print('  [e] cannot parse this, make sure you `pip install feedparser`; skipping.')
         pass

@@ -7,7 +7,7 @@ base_date = datetime.datetime.utcfromtimestamp(1535662299) # datetime.datetime.n
 
 def retrieve_page_contents(url):
   try:
-    res = requests.get(url)
+    res = requests.get(url, timeout=5)
   except requests.exceptions.RequestException as e:
     print("[e] scrapper page error: ", e)
     return False
