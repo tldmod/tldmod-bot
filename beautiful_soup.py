@@ -42,7 +42,7 @@ def check_workshop_update(base_date):
   # swy: exit early if we couldn't retrieve the mod's changelog page
   if not lai_soup or not tld_soup or not swc_soup:
     print("[!] the Steam Workshop pages don't respond, Valve messed up. Network error. Ignoring.")
-    return False
+    return None
 
   lai_title_text = get_page_title(lai_soup)
   tld_title_text = get_page_title(tld_soup)
@@ -50,7 +50,7 @@ def check_workshop_update(base_date):
 
   if lai_title_text == '' or tld_title_text == '' or swc_title_text == '':
     print("[!] the Steam Workshop pages don't respond, Valve messed up. Network error. Ignoring.")
-    return False
+    return None
 
   # swy: seems like Valve doesn't want to respect HTTP error codes, even on errors it throws 200 pages
   #      take advantage of the title: "Steam Community :: Error", and maybe the body:
@@ -60,7 +60,7 @@ def check_workshop_update(base_date):
     # swy: generalized error? then just bail out
     if 'error' in swc_title_text.lower() or 'error' in lai_title_text.lower():
       print("[!] generalized downtime in the Steam Workshop platform, Valve messed up. Ignoring.")
-      return False
+      return None
     else:
       print("[!] the page title is returning '%s', try to fix it on our end." % tld_title_text)
       subprocess.run(["handle-workshop-error"], shell=True)

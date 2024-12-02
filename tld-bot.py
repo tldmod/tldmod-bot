@@ -438,9 +438,14 @@ class TldDiscordClient(discord.ext.commands.Bot):
           f'''New Steam Workshop update — {new_update['date'].strftime("%Y-%m-%d %H:%M")}.\n\n''' +
           f'''Good news, we have deployed a new Workshop update. Take a look at our updated TLD changelog here: https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#{new_update['str']}'''
         )
+      elif new_update == None:
+        # swy: wait around ten minutes if the Workshop keeps having internal errors or transient connection problems, don't spam it
+        print("[e] making the scrapper sleep for 10 minutes.")
+        await asyncio.sleep(60 * 10)
 
       # task runs every 30 seconds; infinitely
       await asyncio.sleep(30)
+
 
 # --
 
