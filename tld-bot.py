@@ -42,8 +42,8 @@ if not 'DISCORD_TOKEN' in os.environ:
 def twitter_send_tweet(text, show_preview=True):
     try:
         import tweepy
-    except:
-        print('  [e] cannot send tweets, you may not have ran `pip install tweepy`; skipping.')
+    except Exception as e:
+        print('  [e] cannot send tweets, you may not have ran `pip install tweepy`; skipping.', e); traceback.print_exc()
         return
 
     if not all(var in os.environ  for var in ('TWITTER_API_KEY', 'TWITTER_API_SECRET', 'TWITTER_ACCOUNT_ACCESS_TOKEN', 'TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET')):
@@ -67,8 +67,8 @@ def mastodon_send_toot(text, show_preview=True):
     #      but as we only want to post on the account that owns the bots we get the token directly, as long as we have the write:status permission
     try:
         import requests
-    except:
-        print('  [e] cannot send toots because the request module is missing; skipping.')
+    except Exception as e:
+        print('  [e] cannot send toots because the request module is missing; skipping.', e); traceback.print_exc()
         return
 
     if not all(var in os.environ  for var in ('MASTODON_ACCOUNT_ACCESS_TOKEN', 'MASTODON_ACCOUNT_ACCESS_URL')):
