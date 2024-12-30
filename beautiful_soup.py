@@ -20,6 +20,7 @@ def retrieve_page_contents(url):
     return False
 
   soup = bs4.BeautifulSoup(res.text, features='html5lib')
+  res.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
   return soup
 
 def get_page_title(soup):

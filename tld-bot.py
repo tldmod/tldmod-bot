@@ -76,7 +76,9 @@ def mastodon_send_toot(text, show_preview=True):
         return
 
     try:
-      requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text, 'visibility': 'unlisted', 'language': 'en'}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
+      resp = requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text, 'visibility': 'unlisted', 'language': 'en'}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
+      resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+
     except Exception as e:
         print('  [!] exception while sending toot. Ignoring:', e)
         pass
@@ -221,6 +223,7 @@ def get_rss_feed(rss_feed_url):
         import requests
         resp = requests.get(rss_feed_url, timeout=5)
         content = io.BytesIO(resp.content)
+        resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
         # --
         return feedparser.parse(content)
     except:
