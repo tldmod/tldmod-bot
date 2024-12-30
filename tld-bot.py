@@ -411,6 +411,7 @@ class TldDiscordClient(discord.ext.commands.Bot):
     try:
       with open('tld-bot-timestamp.txt', 'r') as f:
         base_date = datetime.datetime.fromtimestamp(int(f.read()))
+        print("    base date timestamp:", base_date)
     except:
       pass
 

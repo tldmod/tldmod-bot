@@ -85,6 +85,8 @@ def check_workshop_update(base_date):
       print('[!] found new %s workshop update.' % time.ctime(id))
       base_date = id_date
       return {'date': id_date, 'str': id_str, 'int': id}
+      
+  return False # swy: returned without a result, we scrapped fine but there's nothing newer. nothing wrong, so don't wait 10 minutes between refreshes
 
 if __name__ == "__main__":
   check_workshop_update(base_date)
