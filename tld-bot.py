@@ -57,7 +57,7 @@ def twitter_send_tweet(text, show_preview=True):
         )
         client.create_tweet(text=text) # swy: card_uri is only supported in the 1.1 api, removed in 2.0, we can't use this: , card_uri=(show_preview and None or 'tombstone://card')) # swy: https://stackoverflow.com/questions/65550090/how-to-prevent-automatic-link-preview-generation-for-status-update-in-twitter-ap
     except Exception as e:
-        print('  [!] exception while sending tweet. Ignoring:', e)
+        print('  [!] exception while sending tweet. Ignoring:', e); traceback.print_exc()
         pass
 
 def mastodon_send_toot(text, show_preview=True):
@@ -236,10 +236,10 @@ class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
 
       # swy: bridge RSS feeds ourselves by posting new stuff to Twitter/Mastodon now that dlvr.it no longer has a free plan
       self.rss_feeds = [
-        'http://rss.moddb.com/mods/the-last-days/downloads/feed/rss.xml', # MODDB // Files RSS feed - The Last Days
-        'http://rss.moddb.com/mods/the-last-days/reviews/feed/rss.xml',   # MODDB // Review RSS feed - The Last Days
-      # 'http://rss.moddb.com/mods/the-last-days/videos/feed/rss.xml',    # MODDB // Videos & Audio RSS feed - The Last Days
-        'https://github.com/tldmod/tldmod/commits/master.atom',           # Recent Commits to tldmod - master
+        'https://rss.moddb.com/mods/the-last-days/downloads/feed/rss.xml', # MODDB // Files RSS feed - The Last Days
+        'https://rss.moddb.com/mods/the-last-days/reviews/feed/rss.xml',   # MODDB // Review RSS feed - The Last Days
+      # 'https://rss.moddb.com/mods/the-last-days/videos/feed/rss.xml',    # MODDB // Videos & Audio RSS feed - The Last Days
+        'https://github.com/tldmod/tldmod/commits/master.atom',            # Recent Commits to tldmod - master
       ]
 
       self.rss_last_posted_json_filename = 'tld-bot-rss-last-posted.json'
