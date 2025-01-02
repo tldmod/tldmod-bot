@@ -221,13 +221,18 @@ def get_rss_feed(rss_feed_url):
         # swy: retrieve the URL data ourselves with an actual timeout to avoid the obnoxious
         #      "Shard ID None heartbeat blocked for more than 280 seconds" errors: https://stackoverflow.com/a/39330232/674685
         import requests
-        resp = requests.get(rss_feed_url, timeout=5)
-        content = io.BytesIO(resp.content)
-        resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
-        # --
-        return feedparser.parse(content)
-    except:
-        print('  [e] cannot parse this, make sure you `pip install feedparser`; skipping.')
+        
+        with requests.sessions.Session() as session:
+            with session.get(rss_feed_url, timeout=5, stream=False) as resp:
+                content = resp.content
+                content = io.BytesIO(content)
+                resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+                resp.raw._fp.close()
+                # --
+                
+                return feedparser.parse(content)
+    except Exception as e:
+        print('  [e] cannot parse this, make sure you `pip install feedparser`; skipping.', e); traceback.print_exc()
         pass
 
 class TldRssMastodonAndTwitterPoster(discord.ext.commands.Cog):
