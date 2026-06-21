@@ -59,10 +59,48 @@ def twitter_send_tweet(text, show_preview=True):
     except Exception as e:
         print('  [!] exception while sending tweet. Ignoring:', e); traceback.print_exc()
         pass
+        
+def bluesky_send_skeet(text, show_preview=True):
+    try:
+        import requests
+    except Exception as e:
+        print('  [e] cannot send skeets because the requests module is missing; skipping.', e); traceback.print_exc()
+        return
+
+    if not all(var in os.environ  for var in ('BLUESKY_ACCOUNT_DOMAIN', 'BLUESKY_ACCOUNT_HANDLE', 'BLUESKY_APP_PASSWORD')):
+        print('  [e] cannot send skeets; you are missing the various vars and app passwords needed to call the Bsky API; skipping.')
+        return
+
+    try:
+        login_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}", json = {
+            "identifier": os.environ['BLUESKY_ACCOUNT_HANDLE'],
+            "password":   os.environ['BLUESKY_APP_PASSWORD']
+        }); login_resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+
+        if 'did' in login_resp and 'accessJwt' in login_resp:
+            skeet_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}", json = {
+                "repo": login_resp["did"],
+                "collection": "app.bsky.feed.post",
+                "record": {
+                    "$type": "app.bsky.feed.post",
+                    "text": text,
+                    "createdAt": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "langs": ["en-US"]
+                }
+            }, headers = {'Authorization': f"Bearer {login_resp['accessJwt']}"}); skeet_resp.close() # swy: see above
+        else:
+            print('  [!] Couldn\'t login in bsky. Ignoring:', login_resp)
+
+    except Exception as e:
+        print('  [!] exception while sending skeet. Ignoring:', e)
+        pass
 
 def mastodon_send_toot(text, show_preview=True):
     # swy: keep twitter as fallback, for now
-    twitter_send_tweet(text, show_preview)
+    # swy: not anymore, rip: twitter_send_tweet(text, show_preview)
+    # swy: but we also have bsky in june 2026 after the twitter tweet API got paid-only, apparently :)
+    bluesky_send_skeet(text, show_preview)
+
     # swy: much easier than interfacing with the Twitter API, to get the token for other accounts we'd need to use OAuth
     #      but as we only want to post on the account that owns the bots we get the token directly, as long as we have the write:status permission
     try:

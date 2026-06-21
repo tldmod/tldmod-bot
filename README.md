@@ -23,6 +23,11 @@ export TWITTER_ACCOUNT_ACCESS_TOKEN_SECRET='545jsgsgiojiogfjagklsklasdfklfklñ5g
 export MASTODON_ACCOUNT_ACCESS_TOKEN='k-76kLl3nnjeeeuckj6sdFGñl9k8k7k65h3hb44k7dd'
 export MASTODON_ACCOUNT_ACCESS_URL='botsin.space'
 
+# swy: generate your own app password for your account here: https://bsky.app/settings/app-passwords
+export BLUESKY_ACCOUNT_DOMAIN='bsky.social'
+export BLUESKY_ACCOUNT_HANDLE='tldmod.bsky.social'
+export BLUESKY_APP_PASSWORD='n0ta-f4k3-4rea-llol'
+
 python -u tld-bot.py 2>&1 | tee --ignore-interrupts --append discord.out # swy: without the tee «-i» parameter the Ctrl-C python handler won't work while saving the output with «tee»
 exit $PIPESTATUS                                                         # swy: $? won't work to retrieve the exit code under «tee»: https://stackoverflow.com/a/1221870/674685
 ```
