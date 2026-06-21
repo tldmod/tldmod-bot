@@ -62,7 +62,7 @@ def twitter_send_tweet(text, show_preview=True):
         
 def bluesky_send_skeet(text, show_preview=True):
     try:
-        import requests
+        import requests, re
     except Exception as e:
         print('  [e] cannot send skeets because the requests module is missing; skipping.', e); traceback.print_exc()
         return
@@ -72,24 +72,47 @@ def bluesky_send_skeet(text, show_preview=True):
         return
 
     try:
-        login_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}", json = {
+        login_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.server.createSession", json = {
             "identifier": os.environ['BLUESKY_ACCOUNT_HANDLE'],
             "password":   os.environ['BLUESKY_APP_PASSWORD']
         }); login_resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
 
-        if 'did' in login_resp and 'accessJwt' in login_resp:
-            skeet_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}", json = {
-                "repo": login_resp["did"],
+        login_resp_json = login_resp.json();
+
+        if 'did' in login_resp_json and 'accessJwt' in login_resp_json:
+            # swy: shamelessly ripped from here to make the URLs clickable: https://docs.bsky.app/blog/create-post#mentions-and-links
+            # Parse facets from text and resolve the handles to DIDs
+            def parse_facets(text: str):
+                def parse_urls(text: str):
+                    spans = []
+                    # partial/naive URL regex based on: https://stackoverflow.com/a/3809435
+                    # tweaked to disallow some training punctuation
+                    url_regex = rb"[$|\W](https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*[-a-zA-Z0-9@%_\+~#//=])?)"
+                    text_bytes = text.encode("UTF-8")
+                    for m in re.finditer(url_regex, text_bytes):
+                        spans.append({"start": m.start(1), "end": m.end(1), "url": m.group(1).decode("UTF-8")})
+                    return spans
+                facets = []
+                for u in parse_urls(text):
+                    facets.append({
+                        "index": {"byteStart": u["start"], "byteEnd": u["end"]},
+                        "features": [{"$type": "app.bsky.richtext.facet#link", "uri": u["url"]}],
+                    })
+                return facets
+                
+            skeet_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.repo.createRecord", json = {
+                "repo": login_resp_json["did"],
                 "collection": "app.bsky.feed.post",
                 "record": {
                     "$type": "app.bsky.feed.post",
                     "text": text,
                     "createdAt": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
-                    "langs": ["en-US"]
+                    "langs": ["en-US"],
+                    "facets": parse_facets(text)
                 }
-            }, headers = {'Authorization': f"Bearer {login_resp['accessJwt']}"}); skeet_resp.close() # swy: see above
+            }, headers = {'Authorization': f"Bearer {login_resp_json['accessJwt']}"}); skeet_resp.close() # swy: see above
         else:
-            print('  [!] Couldn\'t login in bsky. Ignoring:', login_resp)
+            print('  [!] Couldn\'t login in bsky. Ignoring:', login_resp, login_resp_json)
 
     except Exception as e:
         print('  [!] exception while sending skeet. Ignoring:', e)
