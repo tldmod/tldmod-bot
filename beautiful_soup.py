@@ -6,8 +6,12 @@ new_update = False
 base_date = datetime.datetime.utcfromtimestamp(1535662299) # datetime.datetime.now()
 
 def retrieve_page_contents(url):
+  text = ''
   try:
-    res = requests.get(url, timeout=5)
+    with requests.sessions.Session() as session:
+      res = session.get(url, timeout=5)
+      text = res.text; res.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+
   except requests.exceptions.RequestException as e:
     print("[e] scrapper page error: ", e)
     return False
@@ -19,8 +23,7 @@ def retrieve_page_contents(url):
     print("[e] scrapper misc request error: ", e)
     return False
 
-  soup = bs4.BeautifulSoup(res.text, features='html5lib')
-  res.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+  soup = bs4.BeautifulSoup(text, features='html5lib')
   return soup
 
 def get_page_title(soup):

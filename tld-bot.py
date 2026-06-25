@@ -59,7 +59,7 @@ def twitter_send_tweet(text, show_preview=True):
     except Exception as e:
         print('  [!] exception while sending tweet. Ignoring:', e); traceback.print_exc()
         pass
-        
+
 def bluesky_send_skeet(text, show_preview=True):
     try:
         import requests, re
@@ -72,7 +72,8 @@ def bluesky_send_skeet(text, show_preview=True):
         return
 
     try:
-        login_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.server.createSession", json = {
+      with requests.sessions.Session() as session:
+        login_resp = session.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.server.createSession", json = {
             "identifier": os.environ['BLUESKY_ACCOUNT_HANDLE'],
             "password":   os.environ['BLUESKY_APP_PASSWORD']
         }); login_resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
@@ -100,7 +101,7 @@ def bluesky_send_skeet(text, show_preview=True):
                     })
                 return facets
                 
-            skeet_resp = requests.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.repo.createRecord", json = {
+            skeet_resp = session.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.repo.createRecord", json = {
                 "repo": login_resp_json["did"],
                 "collection": "app.bsky.feed.post",
                 "record": {
@@ -137,8 +138,9 @@ def mastodon_send_toot(text, show_preview=True):
         return
 
     try:
-      resp = requests.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text, 'visibility': 'unlisted', 'language': 'en'}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
-      resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+        with requests.sessions.Session() as session:
+            resp = session.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text, 'visibility': 'unlisted', 'language': 'en'}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
+            resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
 
     except Exception as e:
         print('  [!] exception while sending toot. Ignoring:', e)
