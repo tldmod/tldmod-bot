@@ -1,6 +1,6 @@
 import bs4, requests
 import datetime, time
-import subprocess
+import subprocess, gc
 
 new_update = False
 base_date = datetime.datetime.utcfromtimestamp(1535662299) # datetime.datetime.now()
@@ -16,8 +16,8 @@ def retrieve_page_contents(url):
         'Upgrade-Insecure-Requests': '1', 'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Site': 'none',
         'Sec-Fetch-User': '?1', 'Priority': 'u=0, i', 'Pragma': 'no-cache'
       })
-      text = res.text; res.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
-
+      text = res.text; res.close(); del res; del session # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685, https://github.com/urllib3/urllib3/issues/2100#issuecomment-2225104737
+    gc.collect()
   except requests.exceptions.RequestException as e:
     print("[e] scrapper page error: ", e)
     return False

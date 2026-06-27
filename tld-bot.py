@@ -4,7 +4,7 @@ import sys
 import asyncio
 import discord, discord.ext.commands, discord.ext.tasks
 import traceback
-import datetime, time, signal, json
+import datetime, time, signal, json, gc
 
 from pprint import pprint
 from aiohttp import connector
@@ -76,9 +76,9 @@ def bluesky_send_skeet(text, show_preview=True):
         login_resp = session.post(f"https://{os.environ['BLUESKY_ACCOUNT_DOMAIN']}/xrpc/com.atproto.server.createSession", json = {
             "identifier": os.environ['BLUESKY_ACCOUNT_HANDLE'],
             "password":   os.environ['BLUESKY_APP_PASSWORD']
-        }); login_resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+        }); login_resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685, https://github.com/urllib3/urllib3/issues/2100#issuecomment-2225104737
 
-        login_resp_json = login_resp.json();
+        login_resp_json = login_resp.json(); del login_resp
 
         if 'did' in login_resp_json and 'accessJwt' in login_resp_json:
             # swy: shamelessly ripped from here to make the URLs clickable: https://docs.bsky.app/blog/create-post#mentions-and-links
@@ -111,7 +111,7 @@ def bluesky_send_skeet(text, show_preview=True):
                     "langs": ["en-US"],
                     "facets": parse_facets(text)
                 }
-            }, headers = {'Authorization': f"Bearer {login_resp_json['accessJwt']}"}); skeet_resp.close() # swy: see above
+            }, headers = {'Authorization': f"Bearer {login_resp_json['accessJwt']}"}); skeet_resp.close(); del skeet_resp; gc.collect() # swy: see above
         else:
             print('  [!] Couldn\'t login in bsky. Ignoring:', login_resp, login_resp_json)
 
@@ -140,7 +140,7 @@ def mastodon_send_toot(text, show_preview=True):
     try:
         with requests.sessions.Session() as session:
             resp = session.post(f"https://{os.environ['MASTODON_ACCOUNT_ACCESS_URL']}/api/v1/statuses", data = {'status': text, 'visibility': 'unlisted', 'language': 'en'}, headers = {'Authorization': f"Bearer {os.environ['MASTODON_ACCOUNT_ACCESS_TOKEN']}"})
-            resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
+            resp.close(); del resp; gc.collect() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685, https://github.com/urllib3/urllib3/issues/2100#issuecomment-2225104737
 
     except Exception as e:
         print('  [!] exception while sending toot. Ignoring:', e)
@@ -291,9 +291,10 @@ def get_rss_feed(rss_feed_url):
                 content = io.BytesIO(content)
                 resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
                 resp.raw._fp.close()
+                del resp; del session
                 # --
-                
                 return feedparser.parse(content)
+        gc.collect()
     except Exception as e:
         print('  [e] cannot parse this, make sure you `pip install feedparser`; skipping.', e); traceback.print_exc()
         pass
