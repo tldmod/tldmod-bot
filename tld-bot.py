@@ -78,7 +78,7 @@ def bluesky_send_skeet(text, show_preview=True):
             "password":   os.environ['BLUESKY_APP_PASSWORD']
         }); login_resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685, https://github.com/urllib3/urllib3/issues/2100#issuecomment-2225104737
 
-        login_resp_json = login_resp.json(); del login_resp
+        login_resp_json = login_resp.json(); del login_resp; gc.collect()
 
         if 'did' in login_resp_json and 'accessJwt' in login_resp_json:
             # swy: shamelessly ripped from here to make the URLs clickable: https://docs.bsky.app/blog/create-post#mentions-and-links
@@ -290,8 +290,8 @@ def get_rss_feed(rss_feed_url):
                 content = resp.content
                 content = io.BytesIO(content)
                 resp.close() # swy: this library is terribly designed and leaks HTTPS sessions: https://stackoverflow.com/a/45180470/674685
-                resp.raw._fp.close()
-                del resp; del session
+                #resp.raw._fp.close()
+                del resp; del session; gc.collect()
                 # --
                 return feedparser.parse(content)
         gc.collect()
