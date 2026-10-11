@@ -493,7 +493,7 @@ class TldDiscordClient(discord.ext.commands.Bot):
         embed = discord.Embed(colour=discord.Colour(0x1b2148), description='Good news, we have deployed a new Workshop update.\nTake a look at our updated TLD [changelog here](https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#%s).' % new_update['str'])
         
         embed.set_thumbnail(url='https://avatars1.githubusercontent.com/u/12862724')
-        embed.set_author(name='New Steam Workshop update — %s' % new_update['date'].strftime("%Y-%m-%d %H:%M"), url='https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock', icon_url='https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/200px-Steam_icon_logo.svg.png')
+        embed.set_author(name='New Steam Workshop update — %s' % new_update['date'].strftime("%Y-%m-%d %H:%M"), url='https://steamcommunity.com/sharedfiles/filedetails/changelog/299974223#profileBlock', icon_url='https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/250px-Steam_icon_logo.svg.png')
         
         embed.add_field(name='➥ Restart your Steam client to force an update', value='Updates should be automatic, but they may take a few minutes.', inline=True)
         embed.add_field(name="➥ How do I get this? I'm using the manual install", value='You need to own the game on Steam and [subscribe here](https://steamcommunity.com/sharedfiles/filedetails/?id=299974223#profileBlock).')
